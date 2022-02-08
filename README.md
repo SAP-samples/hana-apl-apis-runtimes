@@ -1,30 +1,40 @@
 <!--- Register repository https://api.reuse.software/register, then add REUSE badge:
-[![REUSE status](https://api.reuse.software/badge/github.com/SAP-samples/REPO-NAME)](https://api.reuse.software/info/github.com/SAP-samples/REPO-NAME)
+[![REUSE status](https://api.reuse.software/badge/github.com/SAP-samples/hana-apl-apis-runtimes)](https://api.reuse.software/info/github.com/SAP-samples/hana-apl-apis-runtimes)
 -->
 
 # SAP HANA Automated Predictive Library - Samples and runtimes
 
 ## Description
 This repository contains:
-1. SQL sample codes of APL APIS.
-2. Sample datas for the sample codes. The standard HANA import statement or HANA Studio import feature must be used to import these datas.
-3. A reference implementation of the runtime code needed when exporting a model built by APL. Runtime codes are provided for several languages:
-   - C++. Find the details and instructions [here](TO DO)
-   - java. Find the details and instructions [here](TO DO)
-   - javascript. Find the details and instructions [here](TO DO)
+1. [SQL sample codes](sql) of **APL** APIS.
+2. [Sample datas](data) for the sample codes. The standard HANA import statement or HANA Studio import feature must be used to import these datas.
+3. Reference implementations of the runtime code needed when exporting a model built by **APL**. Runtime codes are provided for several languages:
+   - [C++](runtimes/cpp). Find the details and instructions [here](runtimes/cpp/README.md)
+   - [java](runtimes/java). Find the details and instructions [here](runtimes/java/README.md)
+   - [javascript](runtimes/javascript). Find the details and instructions [here](runtimes/javascript/README.md)
+
 ## Requirements
-To use the content, you need access to SAP HANA Automated Predictive Library. Details can be found on our [install documentation](https://help.sap.com/viewer/419fd47c26b345239fdbb5e476a6bc54/2203/en-US).
+To use the content, you need access to **SAP HANA Automated Predictive Library** installed in a [**HANA**](https://www.sap.com/uk/products/hana/what-is-sap-hana.html) server. Details can be found on our [install documentation](https://help.sap.com/viewer/419fd47c26b345239fdbb5e476a6bc54/2203/en-US).
+
 ## Download and Installation
+The sample and runtime files files can be downloaded and used within the respective user / developer environment, e.g. SQL files may be opened and used within the SQL console of SAP HANA Studio or SAP HANA Database Explorer. The sample files don't require a install step for themselves, they are simply downloaded and then opened in the respective editor.
+
+If you've Git installed, clone this repo as shown below, otherwise download as ZIP file.
+
+```Shell
+git clone https://github.com/SAP-samples/hana-apl-apis-runtimes apl_samples
+cd apl_samples
+```
 
 ## Known Issues
 None
 ## How to obtain support
+A set of resources about usage of **APL** is available [here](https://community.sap.com/search/?by=updated&ct=blog&q=APL)
+
 [Create an issue](https://github.com/SAP-samples/<repository-name>/issues) in this repository if you find a bug or have questions about the content.
  
 For additional support, [ask a question in SAP Community](https://answers.sap.com/questions/ask.html).
 
-## Contributing
-If you wish to contribute code, offer fixes or improvements, please send a pull request. Due to legal reasons, contributors will be asked to accept a DCO when they create the first pull request to this project. This happens in an automated fashion during the submission process. SAP uses [the standard DCO text of the Linux Foundation](https://developercertificate.org/).
 
 ## License
 Copyright (c) 2022 SAP SE or an SAP affiliate company. All rights reserved. This project is licensed under the Apache Software License, version 2.0 except as noted otherwise in the [LICENSE](LICENSES/Apache-2.0.txt) file.
