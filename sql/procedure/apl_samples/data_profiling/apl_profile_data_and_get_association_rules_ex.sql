@@ -1,0 +1,81 @@
+-- ================================================================
+-- APL_AREA, PROFILE_DATA_AND_GET_ASSOCIATIONRULES_AND_GET_ASSOCIATIONRULES
+--
+-- Assumption 1: the users & privileges have been created & granted (see apl_admin_ex.sql).
+
+
+
+-- --------------------------------------------------------------------------
+-- Create table type for the dataset
+-- --------------------------------------------------------------------------
+
+connect USER_APL password Password1;
+SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+
+-- --------------------------------------------------------------------------
+-- Create the input/output tables used as arguments for the APL function
+-- --------------------------------------------------------------------------
+drop table FUNC_HEADER;
+create table FUNC_HEADER like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
+insert into FUNC_HEADER values ('Oid', '#42');
+insert into FUNC_HEADER values ('LogLevel', '8');
+
+drop table ASSOCRULES_CONFIG;
+create table ASSOCRULES_CONFIG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";
+insert into ASSOCRULES_CONFIG values ('APL/AssocRulesMinSupport','0.2','');
+insert into ASSOCRULES_CONFIG values ('APL/AssocRulesMinConfidence','0.97','');
+
+drop table VARIABLE_ROLES;
+create table VARIABLE_ROLES like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.VARIABLE_ROLES_WITH_COMPOSITES_OID";
+-- default roles are adjusted: we want all variables to be considered as input variables when profiling the dataset.
+insert into VARIABLE_ROLES values ('class', 'input',null,null,null);
+
+drop table VARIABLE_DESC;
+create table VARIABLE_DESC like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.VARIABLE_DESC_OID";
+-- let this table empty to let the engine guess variable descriptions
+
+drop table OPERATION_LOG;
+create table OPERATION_LOG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
+
+drop table SUMMARY;
+create table SUMMARY like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.SUMMARY";
+
+drop table INDICATORS;
+create table INDICATORS like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.INDICATORS";
+
+drop table VARIABLE_DESC_OUT;
+create table VARIABLE_DESC_OUT like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.VARIABLE_DESC_OID";
+
+drop table ASSOCIATION_RULES;
+create table ASSOCIATION_RULES like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.ASSOCIATION_RULES";
+
+drop table RULE_ITEMS;
+create table RULE_ITEMS like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.RULE_ITEMS";
+
+-- --------------------------------------------------------------------------
+-- Execute the APL function using its AFL wrapper and the actual input/output tables
+-- --------------------------------------------------------------------------
+DO BEGIN     
+    header           = select * from FUNC_HEADER;             
+    config           = select * from ASSOCRULES_CONFIG;  
+    variable_desc    = select * from VARIABLE_DESC;
+    variable_roles    = select * from VARIABLE_ROLES;
+
+    "SAP_PA_APL"."sap.pa.apl.base::PROFILE_DATA_AND_GET_ASSOCIATIONRULES"(:header, :config, :variable_desc, :variable_roles, 'APL_SAMPLES','ADULT01', out_operation_log, out_summary, out_indicators, out_variable_desc, out_association_rules, out_rule_items);
+
+    -- store result into table
+    insert into  "USER_APL"."OPERATION_LOG"      select * from :out_operation_log;
+    insert into  "USER_APL"."SUMMARY"            select * from :out_summary;
+    insert into  "USER_APL"."INDICATORS"         select * from :out_indicators; 
+    insert into  "USER_APL"."VARIABLE_DESC_OUT"  select * from :out_variable_desc;
+    insert into  "USER_APL"."ASSOCIATION_RULES"  select * from :out_association_rules; 
+    insert into  "USER_APL"."RULE_ITEMS"         select * from :out_rule_items;
+
+	-- show result
+    select * from "USER_APL"."OPERATION_LOG";
+    select * from "USER_APL"."SUMMARY";
+    select * from "USER_APL"."INDICATORS";
+    select * from "USER_APL"."VARIABLE_DESC_OUT";
+    select * from "USER_APL"."RULE_ITEMS" order by ITEM_ID;
+    select * from "USER_APL"."ASSOCIATION_RULES" order by RULE_CONFIDENCE desc;
+END;
