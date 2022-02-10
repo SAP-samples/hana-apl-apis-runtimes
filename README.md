@@ -1,10 +1,11 @@
+# SAP HANA Automated Predictive Library - Samples and Runtimes
 <!--- Register repository https://api.reuse.software/register, then add REUSE badge:
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP-samples/hana-apl-apis-runtimes)](https://api.reuse.software/info/github.com/SAP-samples/hana-apl-apis-runtimes)
 -->
 
-# SAP HANA Automated Predictive Library - Samples and Runtimes
-
 ## Description
+This project provides code examples for the SAP HANA Automated Predictive Library (APL). It provides simple APL SQL examples covering all APL APIs, as well as reference implementations of the runtimes needed when predictive models are exported in C++, Java, or JavaScript for massive or real-time scoring.
+
 This repository contains the following:
 1. [SQL sample code](sql) of **APL** APIs.
 2. [Sample data](data) for the sample code. The standard HANA import statement or the HANA studio/SAP HANA database explorer import feature must be used to import the data.
@@ -19,7 +20,7 @@ To use the content, you need access to **SAP HANA Automated Predictive Library**
 ## Download and Installation
 The sample and runtime files can be downloaded and used within the respective user/developer environment, for example, SQL files may be opened and used within the SQL console of SAP HANA studio or SAP HANA database explorer. The sample files don't require an install step for themselves; they can simply be downloaded and then opened in the respective editor.
 
-If you have ve Git installed, clone this repo as shown below, otherwise download the samples as ZIP file.
+If you have ve Git installed, clone this repo as shown below, otherwise download the samples as a ZIP file.
 
 ```Shell
 git clone https://github.com/SAP-samples/hana-apl-apis-runtimes apl_samples
@@ -29,11 +30,11 @@ cd apl_samples
 ## Known Issues
 None
 ## How to Get Support
-A set of resources about the usage of **APL** is available [here](https://community.sap.com/search/?by=updated&ct=blog&q=APL)
+A set of resources about the usage of **APL** is available [in SAP Community](https://community.sap.com/search/?by=updated&ct=blog&q=APL).
 
 [Create an issue](https://github.com/SAP-samples/<repository-name>/issues) in this repository if you find a bug or have questions about the content.
  
-For additional support, [ask a question in SAP Community](https://answers.sap.com/questions/ask.html).
+For additional support, [ask a question in the community](https://answers.sap.com/questions/ask.html).
 
 
 ## License
