@@ -1,10 +1,8 @@
 # SAP HANA Automated Predictive Library - Samples and Runtimes
-<!--- Register repository https://api.reuse.software/register, then add REUSE badge:
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP-samples/hana-apl-apis-runtimes)](https://api.reuse.software/info/github.com/SAP-samples/hana-apl-apis-runtimes)
--->
 
 ## Description
-This project provides code examples for the SAP HANA Automated Predictive Library (APL). It provides simple APL SQL examples covering all APL APIs, as well as reference implementations of the runtimes needed when predictive models are exported in C++, Java, or JavaScript for massive or real-time scoring.
+This project provides code examples for the SAP HANA Automated Predictive Library (APL). It provides simple APL SQL examples covering all APL APIs, as well as reference implementations of the runtimes needed when predictive models are exported in C++, Java, or JavaScript for real-time scoring.
 
 This repository contains the following:
 1. [SQL sample code](sql) of **APL** APIs.
