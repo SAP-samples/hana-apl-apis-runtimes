@@ -43,15 +43,14 @@ npm install amdefine
 
   The javascript runtime consists of 2 js files:
 
-  - [autoRuntime.js](autoruntime.js): Contains the main runtime.
-
-  - [dateCoder.js](dateCoder?js): Provides utilities for date encoding. It is loaded by autoRuntime.js.
+  - [`autoRuntime.js`](autoruntime.js): Contains the main runtime.
+  - [`dateCoder.js`](dateCoder?js): Provides utilities for date encoding. It is loaded by autoRuntime.js.
 
 # Loading the runtime
 
 ## in-Browser environment
 
-* Content of [index.html](index.html)
+* Content of `index.html`
 
 ```html
 <!-- data-main attribute tells to load main.js after require.js is loaded -->
@@ -61,7 +60,7 @@ npm install amdefine
 </script>
 ```
 
-* Content of [main.js](main.js)
+* Content of `main.js`
 
 ```javascript
 require(
@@ -92,8 +91,8 @@ Once the runtime is loaded, a typical workflow is:
   5. Collect entered influencer values
   6. Ask the engine for a prediction based on the entered influencer values
 
-
 ### Step 1:Create a predictive engine based on the JSON model export:
+
 ```javascript
 var engine = runtime.createEngine(jsonExportAsObject);
 ```
@@ -103,6 +102,7 @@ The input parameter of the method createEngine must be a real json object. Depen
 ```javascript
 var jsonExportAsObject = JSON.parse(jsonExportAsString);
 ```
+
 ### Step 2: Ask for some model information:
 Once the predictive engine is created, you can ask for some general information about the model:
 
@@ -119,6 +119,7 @@ Output:
     "targetType": "number" | "integer" | "string" | ... 
     }
 ```
+
 ### Step 3: Ask for the model influencers:
 
 ```javascript  
@@ -136,12 +137,11 @@ Each item of the array is an object that contains the following properties:
     "values": <array>
 }
 ```
+
 The property "values" is an array that contains all the distinct known values of an influencer of type nominal or ordinal integer. A known value is contained in the train dataset.
 
 ### Step 4: Build a UI to enter influencer values
 Using the information about the influencers, it is possible to build a dynamic UI to allow the user entering influencer values for prediction simulations.
-
-A basic sample of UI is available [here](apply.html)
 
 ### Step 5: Collect entered influencer values
 The values that have been entered by the user can be collected and formated  as an array which items contain the following properties:
@@ -164,11 +164,13 @@ var prediction = engine.getScore(values, options);
 #### Input Parameters:
 * values: an array containing the values of the influencers, as described in #5
 * options: an optional object containing the prediction options:
+
 ```json
 {
     "interactions": true | false    // true to generate the interactions; false by default
 }
 ```
+
 #### Output:
 
 ```javascript
@@ -181,6 +183,7 @@ var prediction = engine.getScore(values, options);
 ```
 
 Each item of the array of contributions contains the following properties:
+
 ```javascript
 {
     "influencerName": <string>          // The name of the influencer
@@ -189,6 +192,7 @@ Each item of the array of contributions contains the following properties:
     "interactions": <array>             // array of interactions if options.interactions is true
 }
 ```
+
 The property **`normalizedContribution`** contains the z-score of the influencer contribution, that illustrates the relation between the contribution value and the mean of the contributions.
 
 Assuming the contribution values follow a normal distribution, it means we can refer to the empirical rule, i.e. the **`three-sigma`** rule, or the **`68-95-99.7`** rule:
@@ -203,6 +207,7 @@ For example:
 - normalize contribution > 2       = strong contribution
 
 In case **`options.interactions`** is **`true`**, the influencer contribution contains an additional property called **`"interactions"`** that contains an array of interaction values:
+
 ```javascript
 {
     "variable": <string>      // The name of the influencer the current influencer is interacting with
@@ -242,7 +247,5 @@ Here is a full prediction object example:
 # Notes
 
 - The interactions are available for **gradient boosting** models only.
-
 - The array of interactions contains a value for the interaction between the current influencer and itself. This value is called the main effect. The sum of all other interaction values is called the interaction effect.
-
 - For a given influencer, the sum of all the interaction values, i.e. the main effect plus the interaction effect, is equal to the influencer contribution.

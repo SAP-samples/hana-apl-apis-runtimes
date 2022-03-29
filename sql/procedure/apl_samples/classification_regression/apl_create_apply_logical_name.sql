@@ -48,4 +48,3 @@ DO BEGIN
     SELECT * FROM :out_schema;
    
 END;
-

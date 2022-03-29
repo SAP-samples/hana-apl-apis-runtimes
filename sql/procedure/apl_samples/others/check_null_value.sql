@@ -67,37 +67,37 @@ DO BEGIN
     select COUNT(*)               into count_null    from "DATASET_WITH_NULL"  WHERE "age" is null;
     select "Missing Value Weight" into missing_value from :var_data where "Variable" = 'age';
     if ( :count_null  !=  :missing_value  ) then
-	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for age' ;
+	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for age (null:' || :count_null  ||  ' missing:' ||  :missing_value || ')' ;
 	end if;       
    
     select COUNT(*)               into count_null    from "DATASET_WITH_NULL"  WHERE "workclass" is null;
     select "Missing Value Weight" into missing_value from :var_data where "Variable" = 'workclass';
     if ( :count_null  !=  :missing_value  ) then
-	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for workclass' ;
+	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for workclass (null:'  || :count_null  ||  ' missing:' ||  :missing_value || ')' ;
 	end if;       
    
     select COUNT(*)               into count_null    from "DATASET_WITH_NULL"  WHERE "fnlwgt" is null;
     select "Missing Value Weight" into missing_value from :var_data where "Variable" = 'fnlwgt';
     if ( :count_null  !=  :missing_value  ) then
-	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for fnlwgt' ;
+	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for fnlwgt (null:'  || :count_null  ||  ' missing:' ||  :missing_value || ')' ;
 	end if;       
    
     select COUNT(*)               into count_null    from "DATASET_WITH_NULL"  WHERE "capital-gain" is null;
     select "Missing Value Weight" into missing_value from :var_data where "Variable" = 'capital-gain';
     if ( :count_null  !=  :missing_value  ) then
-	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for capital-gain' ;
+	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for capital-gain (null:'  || :count_null  ||  ' missing:' ||  :missing_value || ')' ;
 	end if;    
 
     select COUNT(*)               into count_null    from "DATASET_WITH_NULL"  WHERE "capital-loss" is null;
     select "Missing Value Weight" into missing_value from :var_data where "Variable" = 'capital-loss';
     if ( :count_null  !=  :missing_value  ) then
-	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for capital-loss' ;
+	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for capital-loss (null:' || :count_null  ||  ' missing:' ||  :missing_value || ')' ;
 	end if;  
 
     select COUNT(*)               into count_null    from "DATASET_WITH_NULL"  WHERE "date" is null;
     select "Missing Value Weight" into missing_value from :var_data where "Variable" = 'date_DoM';
     if ( :count_null  !=  :missing_value  ) then
-	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for date' ;
+	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for date (null:' || :count_null  ||  ' missing:' ||  :missing_value || ')';
 	end if;  
 
 END;

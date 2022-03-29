@@ -48,7 +48,7 @@ DO BEGIN
 --    :header.insert(('Cancelable','true'));   
     :header.insert(('MaxTasks', '4'));  -- define nb parallel tasks to use for forecast
 
-    :config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define a dateset's column as segmented value
+    :config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define the column used as the segmentation colum
     :config.insert(('APL/Horizon', '20',null));
     :config.insert(('APL/TimePointColumnName', 'Date',null));
     :config.insert(('APL/LastTrainingTimePoint', '2001-12-29 00:00:00',null));
