@@ -6,7 +6,9 @@ This project provides code examples for the SAP HANA Automated Predictive Librar
 
 This repository contains the following:
 1. [SQL sample code](sql) of **APL** APIs.
-2. [Sample data](data) for the sample code. The standard HANA import statement or the HANA studio/SAP HANA database explorer import feature must be used to import the data.
+2. Sample data for the sample codes. 
+   * For HANA On Premise, the standard HANA import statement or the HANA studio import feature must be used to import the folder [dataForHANAOnPremise](dataForHANAOnPremise).
+   * For HANA Cloud, the SAP HANA database explorer import Catalog objects feature must be used to import the archive [dataForHANACloud.tar.gz](dataForHANACloud.tar.gz).
 3. Reference implementations of the runtime code needed when exporting a model built by **APL**. Runtime code is provided for the following languages:
    - [C++](runtimes/cpp). Find the details and instructions [here](runtimes/cpp/README.md)
    - [java](runtimes/java). Find the details and instructions [here](runtimes/java/README.md)
