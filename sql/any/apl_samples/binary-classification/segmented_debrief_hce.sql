@@ -1,4 +1,5 @@
 -- @required(hanaMinimumVersion,4.00.000)
+-- Supported only on HANA Cloud
 -- ================================================================
 -- APL_AREA, APPLY_MODEL, using a binary format for the model
 -- This script demonstrates the application of the binary classification model

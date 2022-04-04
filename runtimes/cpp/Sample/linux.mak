@@ -31,6 +31,9 @@ KXCPPRT_OBJS = KxCppRTValue.o KxCppRTModelManager.o KxCppRTUtilities.o
 $(MODEL_OBJECT): $(MODEL_FILE).cpp
 	$(COMPILER) $(COMPILER_FLAGS) -Wno-sign-compare -c $<
 
+main.o: main.cpp	
+	$(COMPILER) $(COMPILER_FLAGS) -c main.cpp
+
 # Main target
 all : before clean modelapply
 

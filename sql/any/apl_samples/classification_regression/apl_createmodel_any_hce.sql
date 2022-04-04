@@ -1,4 +1,5 @@
 -- @required(hanaMinimumVersion,4.00.000)
+-- Supported only on HANA Cloud
 -- ================================================================
 -- APL_AREA, CREATE_MODEL, using a binary format for the model
 --

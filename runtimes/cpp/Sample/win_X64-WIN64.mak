@@ -32,6 +32,9 @@ KXCPPRT_OBJS=KxCppRTValue.obj KxCppRTModelManager.obj KxCppRTUtilities.obj
 .cpp.obj:
 	$(COMPILER) $(COMPILER_FLAGS) -c $<
 
+main.obj: main.cpp	
+	$(COMPILER) $(COMPILER_FLAGS) -c main.cpp
+
 # Main target
 all : before clean modelapply
 

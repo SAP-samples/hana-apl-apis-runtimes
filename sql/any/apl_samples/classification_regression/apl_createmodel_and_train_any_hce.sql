@@ -1,4 +1,5 @@
 -- @required(hanaMinimumVersion,4.00.000)
+-- Supported only on HANA Cloud
 -- ================================================================
 -- APL_AREA, CREATE_MODEL_AND_TRAIN, using a binary format for the model
 -- This script creates a model, guesses its description and trains it

@@ -1,4 +1,5 @@
 -- @required(hanaMinimumVersion,4.00.000)
+-- Supported only on HANA Cloud
 -- ================================================================
 connect USER_APL password Password1;
 SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
