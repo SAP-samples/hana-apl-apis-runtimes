@@ -124,10 +124,11 @@ create table APPLY_OUT like SOCIAL_SCORE_T;
 -- --------------------------------------------------------------------------
 -- Execute the APL function using its AFL wrapper and the actual input/output tables
 -- --------------------------------------------------------------------------
-DO BEGIN     
+DO BEGIN
+	DECLARE model "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_NATIVE";
     header             = select * from FUNC_HEADER;
     config             = select * from APPLY_CONFIG;    
-	model              = select * from MODEL_SOCIAL;  
+	model 			   = select * from MODEL_SOCIAL ORDER BY "ID";
 	appply_in          = select * from INPUT_DATA;  
     
     "SAP_PA_APL"."sap.pa.apl.base::APPLY_SOCIAL_MODEL"(

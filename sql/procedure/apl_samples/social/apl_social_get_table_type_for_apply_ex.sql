@@ -91,9 +91,10 @@ create table INPUT_DATA like APPLY_IN_CONTACT_EVENTS_T;
 -- Execute the APL function using its AFL wrapper and the actual input/output tables
 -- --------------------------------------------------------------------------
 DO BEGIN     
+	DECLARE model "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_NATIVE";
     header             = select * from FUNC_HEADER;
     config             = select * from APPLY_CONFIG;    
-	model              = select * from MODEL_SOCIAL;  
+	model              = select * from MODEL_SOCIAL ORDER BY "ID";
     
     "SAP_PA_APL"."sap.pa.apl.base::GET_TABLE_TYPE_FOR_SOCIAL_APPLY"(
         :header,
