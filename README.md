@@ -1,6 +1,7 @@
 # SAP HANA Automated Predictive Library - Samples and Runtimes
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP-samples/hana-apl-apis-runtimes)](https://api.reuse.software/info/github.com/SAP-samples/hana-apl-apis-runtimes)
 
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
 ## Description
 This project provides code examples for the SAP HANA Automated Predictive Library (APL). It provides simple APL SQL examples covering all APL APIs, as well as reference implementations of the runtimes needed when predictive models are exported in C++, Java, or JavaScript for real-time scoring.
 
@@ -36,6 +37,8 @@ A set of resources about the usage of **APL** is available [in SAP Community](ht
  
 For additional support, [ask a question in the community](https://answers.sap.com/questions/ask.html).
 
+## Code of conduct
+Read the [Covenant Code of Conduct](CODE_OF_CONDUCT.md)
 ## Contributing
 If you wish to contribute code, offer fixes or improvements, please send a pull request. Due to legal reasons, contributors will be asked to accept a DCO when they create the first pull request to this project. This happens in an automated fashion during the submission process. SAP uses [the standard DCO text of the Linux Foundation](https://developercertificate.org/).
 
