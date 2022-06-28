@@ -120,7 +120,7 @@ DO BEGIN
 	model_communities  = select * from MODEL_SOCIAL_COMMUNITIES;  
 	model_attributes1  = select * from MODEL_SOCIAL_ATTRIBUTES1;  
 	model_attributes2  = select * from MODEL_SOCIAL_ATTRIBUTES2;  
-	appply_in          = select * from INPUT_DATA;  
+	apply_in          = select * from INPUT_DATA;  
     
     APLWRAPPER_GET_TABLE_TYPE_FOR_SOCIAL_APPLY(
         :header,
@@ -132,7 +132,7 @@ DO BEGIN
 	    :model_attributes1,
 	    :model_attributes2,
 		:config,
-        :appply_in,
+        :apply_in,
         out_schema,
 	    out_log);          
 

@@ -147,7 +147,7 @@ DO BEGIN
 	model_communities  = select * from MODEL_SOCIAL_COMMUNITIES;  
 	model_attributes1  = select * from MODEL_SOCIAL_ATTRIBUTES1;  
 	model_attributes2  = select * from MODEL_SOCIAL_ATTRIBUTES2;  
-	appply_in          = select * from INPUT_DATA;  
+	apply_in          = select * from INPUT_DATA;  
     
     APLWRAPPER_APPLY_SOCIAL_MODEL(
         :header,
@@ -159,12 +159,12 @@ DO BEGIN
 	    :model_attributes1,
 	    :model_attributes2,
 		:config,
-        :appply_in,
-        out_appply,
+        :apply_in,
+        out_apply,
 	    out_log);          
 
     -- store result into table
-    insert into  "USER_APL"."APPLY_OUT"  select * from :out_appply;
+    insert into  "USER_APL"."APPLY_OUT"  select * from :out_apply;
     insert into  "USER_APL"."APPLY_LOG"  select * from :out_log;
 
     -- show result

@@ -63,7 +63,7 @@ insert into CENSUS_ROLES values ('class', 'target');
 
 
 -- --------------------------------------------------------------------------
--- Create table type for appply (  use GET_TABLE_TYPE_FOR_APPLY found out how build this type  )
+-- Create table type for apply (  use GET_TABLE_TYPE_FOR_APPLY found out how build this type  )
 -- --------------------------------------------------------------------------
 drop type CENSUS_T_OUT;
 create type CENSUS_T_OUT as table (

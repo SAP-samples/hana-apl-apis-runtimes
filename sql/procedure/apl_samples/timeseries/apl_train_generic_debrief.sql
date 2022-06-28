@@ -58,4 +58,5 @@ DO BEGIN
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_PerformanceByHorizon"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_Outliers"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_Decomposition"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_ChangePoints"(:out_debrief_property, :out_debrief_metric);
 END;

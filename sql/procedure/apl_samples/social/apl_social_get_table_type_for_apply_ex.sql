@@ -94,7 +94,7 @@ DO BEGIN
 	DECLARE model "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_NATIVE";
     header             = select * from FUNC_HEADER;
     config             = select * from APPLY_CONFIG;    
-	model              = select * from MODEL_SOCIAL ORDER BY "ID";
+	model              = select * from MODEL_SOCIAL;
     
     "SAP_PA_APL"."sap.pa.apl.base::GET_TABLE_TYPE_FOR_SOCIAL_APPLY"(
         :header,
