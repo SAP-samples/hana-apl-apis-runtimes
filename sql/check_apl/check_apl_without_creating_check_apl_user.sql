@@ -1,83 +1,25 @@
 -- ================================================================
--- @required(hanaMinimumVersion,2.0.30)
--- This script is compatible with HANA 2 and Hana Cloud
--- The purpose of this script is to validate the APL installation by:
---	check APL is actually installed
---		APL plugin is installed
---		Script server is actvated 
--- check APL is properly installed:
---      APL low level functions are installed
---      APL high level functions are installed
---      APL rights are available and can be granted
---      APL DU is properly activated
---		Check some well known issue in APL installation
---  check APL run time is OK:
---      check APL ping can be called
---      check results of APL ping (direct mode as well as procedure mode)
---		create from scratch a minimal input dataset
---		check a train can be done using procedure mode
--- 
---
--- Output: a result set with 3 columns:
---  Short description of the check
---  High level status (OK,WARNING,ERROR) 
---  Detailed infos on the result of the check (and possibly,a fix)
+-- @configSQL
 
--- Command line to run this script is:
--- hdbsql -n <HostName>:<port> -u SYSTEM -p <System password> -I .check_apl.sql -g '' -V SYSTEM_PASSWORD=<System password> -j -A 
---
--- Example:
--- hdbsql -n localhost:30041 -u SYSTEM -p Password1 -I ./check_apl.sql -g '' -V SYSTEM_PASSWORD=Password1 -j -A 
+-- This script is compatible with HANA 2 only
 
--- A more convenient way to run this script may be:
--- HANA_SYSTEM_PASSWORD=<HANA SYSTEM USER's password>; CHECK_APL_PASSWORD=Password1 ;hdbsql -n HANA host name>:<port> -u SYSTEM -p $HANA_SYSTEM_PASSWORD -g "" -V SYSTEM_PASSWORD=$HANA_SYSTEM_PASSWORD,CHECK_APL_PASSWORD=$CHECK_APL_PASSWORD -j -A -I check_apl.sql
+-- to use if SYSTEM user or hdbsql tool is not available
 
--- Example:
--- HANA_SYSTEM_PASSWORD=Manager1; CHECK_APL_PASSWORD=Password1 ;/usr/sap/hdbclient_2_9_28/hdbsql -n hana:30015 -u SYSTEM -p $HANA_SYSTEM_PASSWORD -g "" -V SYSTEM_PASSWORD=$HANA_SYSTEM_PASSWORD,CHECK_APL_PASSWORD=$CHECK_APL_PASSWORD -j -A -I /SAPDevelop/apl/src/sql/check_apl/check_apl.sql >/tmp/b 2>&1
+-- current user must have been granted APL rights:
+-- HANA On Premise
+--			Standard APL rights
+--	 			GRANT AFL__SYS_AFL_APL_AREA_EXECUTE TO <USER NAME that will run this file>;
+-- 				GRANT AFLPM_CREATOR_ERASER_EXECUTE TO <USER NAME that will run this file>;
+--				CALL "_SYS_REPO"."GRANT_ACTIVATED_ROLE" ('sap.pa.apl.base.roles::APL_EXECUTE','<USER NAME that will run this file>')
+--			These ones only to be ablme to check status of APL's Delivery Unit
+-- 				GRANT SELECT ON "_SYS_REPO"."DELIVERY_UNITS" TO <USER NAME that will run this file>;
+-- 				GRANT SELECT ON "_SYS_REPO"."ACTIVE_OBJECT" TO <USER NAME that  will run this file>;
+-- HANA Cloud
+--			Standard APL rights
+--	 			GRANT AFL__SYS_AFL_APL_AREA_EXECUTE TO <USER NAME that will run this file>;
+-- 				GRANT AFLPM_CREATOR_ERASER_EXECUTE TO <USER NAME that will run this file>;
+--				GRANT "sap.pa.apl.base.roles::APL_EXECUTE" TO <USER NAME that will run this file>;
 
--- More details are available in readme.md
-
-
--- use a hdbsql's macro to use the password of the system user
-connect SYSTEM PASSWORD &SYSTEM_PASSWORD;
-
-DROP USER CHECK_APL CASCADE;
-CREATE USER CHECK_APL PASSWORD Password1;
-ALTER USER CHECK_APL DISABLE PASSWORD lifetime;
-
-DO BEGIN
-	DECLARE major INT;
-	SELECT CAST(SUBSTR_BEFORE ("VERSION", '.') AS INT) into major FROM "M_DATABASE";
-	 IF :major < 4
-	 THEN
-	 	-- this has a meaning only on HANA On Premise
-		EXECUTE IMMEDIATE 'GRANT SELECT ON "_SYS_REPO"."DELIVERY_UNITS" TO CHECK_APL';
-		EXECUTE IMMEDIATE 'GRANT SELECT ON "_SYS_REPO"."ACTIVE_OBJECT" TO CHECK_APL';
-		SELECT 'Some specific read-only rights have been granted so APL''s Delivery Unit checks can be done' AS "Note" FROM DUMMY;
-	 END IF;
-END;
-
--- standard APL rights
-GRANT AFL__SYS_AFL_APL_AREA_EXECUTE TO CHECK_APL;
-GRANT AFLPM_CREATOR_ERASER_EXECUTE TO CHECK_APL;
-
-DO BEGIN
-	DECLARE major INT;
-	SELECT CAST(SUBSTR_BEFORE ("VERSION", '.') AS INT) into major FROM "M_DATABASE";
-	 IF :major < 4
-	 THEN
-	 	-- this has a meaning only on HANA On Premise
-		EXECUTE IMMEDIATE 'CALL "_SYS_REPO"."GRANT_ACTIVATED_ROLE" (''sap.pa.apl.base.roles::APL_EXECUTE'',''CHECK_APL'')';
-	ELSE
-	 	-- this has a meaning only on HANA Cloud
-		EXECUTE IMMEDIATE 'GRANT "sap.pa.apl.base.roles::APL_EXECUTE" TO CHECK_APL';
-	 END IF;
-END;
-
--- now we can run analysis
-
--- use a hdbsql's macro to use the password of CHECK_APL
-connect CHECK_APL PASSWORD &CHECK_APL_PASSWORD;
 
 -- recreate these types so we don't depend on a successfull deployment of APL types
 
@@ -214,7 +156,6 @@ AS BEGIN
 	 END IF;
 END;
 
--- Don't call this function on hce
 CREATE FUNCTION "HAS_EFFECTIVE_APL_PROC"(IN proc_name NVARCHAR(1000))
 RETURNS has_proc BOOLEAN
 LANGUAGE SQLSCRIPT
@@ -239,7 +180,6 @@ AS BEGIN
 END;
 
 
--- Don't call this function on hce
 
 CREATE FUNCTION "CAN_CALL_APL_PROC"(IN proc_name NVARCHAR(1000))
 RETURNS can_call NVARCHAR(1000)
@@ -270,7 +210,6 @@ AS BEGIN
 	END IF;
 END;
 
--- Don't call this procedure on hce
 
 CREATE PROCEDURE "CHECK_CAN_CALL_APL_PROCEDURE"(IN proc_name NVARCHAR(1000), OUT can_call NVARCHAR(1000), OUT results "CHECK_RESULTS_T")
 LANGUAGE SQLSCRIPT 
@@ -449,7 +388,6 @@ BEGIN
 	:results.insert(('Checking installation of APL plugin','Done',''));
 END;
 
-
 CREATE PROCEDURE "CHECK_APL_STRANGE_ISSUES"(OUT results "CHECK_RESULTS_T")
 LANGUAGE SQLSCRIPT 
 SQL SECURITY INVOKER
@@ -515,7 +453,6 @@ BEGIN
 	:results.insert(('Checking deployment issues of APL plugin','Done',''));
 END;
 
-
 CREATE PROCEDURE "CHECK_APL_BASIC_RUNTIME"(OUT results "CHECK_RESULTS_T")
 LANGUAGE SQLSCRIPT 
 SQL SECURITY INVOKER
@@ -542,15 +479,12 @@ BEGIN
     :results.insert(:ping_results);
 	:results.insert(('Calling direct PING successful','OK',''));
 	:results.insert(('Checking PING (proc mode)','',''));
-	IF 	is_hce = FALSE
-	THEN
-	    CALL "CHECK_CAN_CALL_APL_PROCEDURE"('sap.pa.apl.base::PING',can_call_ping,can_call_ping_results);
-    	:results.insert(:can_call_ping_results);
-   	END IF;
-	-- we always try to do the call : maybe we missed something
+    CALL "CHECK_CAN_CALL_APL_PROCEDURE"('sap.pa.apl.base::PING',can_call_ping,can_call_ping_results);
+    :results.insert(:can_call_ping_results);
+    -- we always try to do the call : maybe we missed something
     -- use an exec so this code can always been compiled
 	:results.insert(('Try to really call sap.pa.apl.base::PING)','',''));
-    -- use an exec so this code can always be compiled
+    	-- use an exec so this code can always be compiled
 	EXECUTE IMMEDIATE 'CALL "SAP_PA_APL"."sap.pa.apl.base::PING"(:ping_proc)' into ping_proc;
     ping_results = SELECT 'ping proc' AS "KEY","name" AS "STATUS","value" AS "DETAILS" FROM :ping_proc;
     :results.insert(:ping_results);
@@ -567,6 +501,7 @@ BEGIN
     END IF;
 	:results.insert(('Checking APL basic run time','Done',''));
 END;
+
 
 CREATE PROCEDURE "ANALYZE_CHECKS"(
 	IN check_results "CHECK_RESULTS_T",
@@ -654,6 +589,8 @@ BEGIN
 	end if;
 END;
 
+
+
 CREATE TYPE "SMALL_ADULT_T" AS TABLE (
 	 "age" INTEGER,
 	 "workclass" NVARCHAR(32),
@@ -671,13 +608,17 @@ CREATE TYPE "SMALL_ADULT_T" AS TABLE (
 	 "native-country" NVARCHAR(32),
 	 "class" INTEGER);
 
+
+
 CREATE COLUMN TABLE "SMALL_ADULT" LIKE "SMALL_ADULT_T";
+
 
 CREATE PROCEDURE "PREPARE_DATA_FOR_CHECK_TRAIN_PROCEDURE_MODE"()
 LANGUAGE SQLSCRIPT
 SQL SECURITY INVOKER
-AS BEGIN
-	TRUNCATE TABLE "SMALL_ADULT";
+AS
+BEGIN 
+    TRUNCATE TABLE "SMALL_ADULT";
 	INSERT INTO "SMALL_ADULT" VALUES (39,'State-gov',77516,'Bachelors',13,'Never married','Adm-clerical','Not-in-family','White','Male',2174,0,40,'United States',0);
 	INSERT INTO "SMALL_ADULT" VALUES (50,'Self-emp-not-inc',83311,'Bachelors',13,'Married civ spouse','Exec managerial','Husband','White','Male',0,0,13,'United States',0);
 	INSERT INTO "SMALL_ADULT" VALUES (38,'Private',215646,'HS-grad',9,'Divorced','Handlers-cleaners','Not-in-family','White','Male',0,0,40,'United States',0);
@@ -1180,6 +1121,8 @@ AS BEGIN
 	INSERT INTO "SMALL_ADULT" VALUES (72,NULL,303588,'HS-grad',9,'Married civ spouse',NULL,'Husband','White','Male',0,0,20,'United States',1);
 END;
 
+
+
 CREATE PROCEDURE "CHECK_TRAIN_PROCEDURE_MODE"(OUT results "CHECK_RESULTS_T")
 LANGUAGE SQLSCRIPT 
 SQL SECURITY INVOKER
@@ -1197,7 +1140,6 @@ BEGIN
 	DECLARE who_am_i NVARCHAR(1000);
 	DECLARE can_call_train NVARCHAR(1000);
 	DECLARE nb INTEGER;
-	DECLARE is_hce BOOLEAN = "IS_HCE"();
     DECLARE CONTINUE HANDLER FOR SQLEXCEPTION	
 	-- DECLARE EXIT HANDLER FOR SQLEXCEPTION	
 	BEGIN
@@ -1208,12 +1150,9 @@ BEGIN
 	
 	CALL "PREPARE_DATA_FOR_CHECK_TRAIN_PROCEDURE_MODE"();
 
-	IF :is_hce = FALSE
-	THEN
-	    CALL "CHECK_CAN_CALL_APL_PROCEDURE"('sap.pa.apl.base::CREATE_MODEL_AND_TRAIN',can_call_train,can_call_results);
-	    :results.insert(:can_call_results);
-	END IF;
+    CALL "CHECK_CAN_CALL_APL_PROCEDURE"('sap.pa.apl.base::CREATE_MODEL_AND_TRAIN',can_call_train,can_call_results);
     SELECT CURRENT_USER into who_am_i FROM DUMMY;
+    :results.insert(:can_call_results);
     -- we always try to do the call : maybe we missed something
     -- use an exec so this code can always been compiled
 	:results.insert(('Try to really call sap.pa.apl.base::CREATE_MODEL_AND_TRAIN','',''));
@@ -1236,6 +1175,9 @@ BEGIN
     END IF;
 	:results.insert(('Checking runtime train in procedure mode','Done',''));
 END;
+
+
+
 
 CREATE PROCEDURE "CHECK_APL_FULL_INSTALL"(	OUT final_results "CHECK_RESULTS_T")
 LANGUAGE SQLSCRIPT 
@@ -1304,27 +1246,8 @@ BEGIN
     	:final_results.insert(('==============================','',''));
     	:final_results.insert(('==============================','',''));
 	END IF;
-	-- keep using LOWER. This is not a mistake
-	SELECT LOWER(SESSION_USER) into who_am_i FROM "DUMMY";
-	IF :who_am_i <> 'check_apl' AND :who_am_i<>'rouser'
-	THEN
-		-- do the final check and pop an sql error
-		-- if an issue is detected
-		SELECT COUNT(*) into nb_issues FROM :final_results WHERE "STATUS" IN ('ISSUE','ERROR');
-		IF :nb_issues > 0
-		THEN
-			SELECT '['||STRING_AGG("KEY" || ' ' || COALESCE("STATUS",'') || ' ' || COALESCE("DETAILS",'') || CHAR(10))||']' INTO error_message FROM :final_results;		
-			SIGNAL ERROR_APL set MESSAGE_TEXT = :error_message;
-		END IF;
-	END IF;
 END;
 
+
 CALL "CHECK_APL_FULL_INSTALL"(?);
-
--- Clean everything (need to be system again)
-
--- use a hdbsql's macro to use the password of the system user
-connect SYSTEM PASSWORD &SYSTEM_PASSWORD;
-
-DROP USER CHECK_APL CASCADE;
 
