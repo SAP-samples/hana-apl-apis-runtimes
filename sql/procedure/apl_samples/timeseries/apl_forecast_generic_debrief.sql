@@ -36,6 +36,7 @@ DO BEGIN
     :config.insert(('APL/LastTrainingTimePoint', '2001-12-29 00:00:00',null));
     :config.insert(('APL/ForcePositiveForecast', 'true',null));
     :config.insert(('APL/WithExtraPredictable', 'true',null));
+    :config.insert(('APL/ActivateExplanations', 'true',null));    
 
     :var_role.insert(('Date', 'input',null,null,'Daily Xtra'));
     :var_role.insert(('Cash', 'target',null,null,'Daily Xtra'));
@@ -64,7 +65,10 @@ DO BEGIN
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_Performance"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_PerformanceByHorizon"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_Outliers"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_ImpactInfluencersCategorical"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_ImpactInfluencersNumerical"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_Decomposition"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_ChangePoints"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_ImpactCycles"(:out_debrief_property, :out_debrief_metric);
 END;
 
