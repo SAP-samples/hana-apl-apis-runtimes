@@ -885,6 +885,24 @@ define(['./dateCoder'], function(dateCoder) {
         return total;
     };
 
+    // we use a different permutation weighting for Shapley-Taylor interactions as if the total number of features was one larger
+    KGBEngine.prototype._treeShapUnwoundPathSumInteractions = function(uniquePath, uniqueDepth, pathIndex) {
+
+        var nextOnePortion = uniquePath[uniqueDepth].weight;
+        var pathElement = uniquePath[pathIndex];
+        var total = 0;
+        for (var i = uniqueDepth - 1; i >= 0; i--) {
+            if (pathElement.oneFraction != 0) {
+                var tmp = (nextOnePortion * (uniqueDepth - i)) / ((i + 1) * pathElement.oneFraction);
+                total += tmp;
+                nextOnePortion = uniquePath[i].weight - tmp * pathElement.zeroFraction;
+            } else {
+                total += uniquePath[i].weight / pathElement.zeroFraction;
+            }
+        }
+        return 2 * total;
+    };
+
     KGBEngine.prototype._treeShapExtend = function(uniquePath, pathDepth, zeroFraction, oneFraction, parentSplitFeature) {
 
         var itemsToRemove = uniquePath.length - pathDepth;
@@ -938,7 +956,11 @@ define(['./dateCoder'], function(dateCoder) {
 
         if (this._isLeaf(node)) {
             for (var i = 1; i <= pathDepth; i++) {
-                var weight = this._treeShapUnwoundPathSum(localUniquePath, pathDepth, i);
+                if (condition === 0) {
+                    var weight = this._treeShapUnwoundPathSum(localUniquePath, pathDepth, i);
+                } else {
+                    var weight = this._treeShapUnwoundPathSumInteractions(localUniquePath, pathDepth, i);
+                }
                 var pathElement = localUniquePath[i];
                 shapValues[pathElement.parentSplitFeature] += weight * (pathElement.oneFraction - pathElement.zeroFraction) * node[this.KgbConstants.LEAF_VALUE] * conditionFraction;
             }
