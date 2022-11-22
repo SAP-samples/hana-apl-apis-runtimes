@@ -27,19 +27,19 @@ DO BEGIN
     declare out_debrief_metric   "SAP_PA_APL"."sap.pa.apl.base::BASE.T.DEBRIEF_METRIC_OID";      
     declare out_debrief_property "SAP_PA_APL"."sap.pa.apl.base::BASE.T.DEBRIEF_PROPERTY_OID";      
 
-	model = select * from MODEL_TRAIN_BIN;
+    model = select * from MODEL_TRAIN_BIN;
 
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '2'));
-    :header.insert(('MaxTasks', '4'));  -- define nb parallel tasks to use for train
+    :header.insert(('MaxTasks', '2'));  -- define nb parallel tasks to use for train
 
     :config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define the column used as the segmentation colum
 
-	call "SAP_PA_APL"."sap.pa.apl.base::GET_MODEL_DEBRIEF"(:header, :model, :config, out_debrief_metric, out_debrief_property, out_debrief_summary);
-	
-	-- store result into table
-	insert into  DEBRIEF_PROPERTY       select * from :out_debrief_property;
-	insert into  DEBRIEF_METRIC         select * from :out_debrief_metric;
+    call "SAP_PA_APL"."sap.pa.apl.base::GET_MODEL_DEBRIEF"(:header, :model, :config, out_debrief_metric, out_debrief_property, out_debrief_summary);
+    
+    -- store result into table
+    insert into  DEBRIEF_PROPERTY       select * from :out_debrief_property;
+    insert into  DEBRIEF_METRIC         select * from :out_debrief_metric;
     insert into  DEBRIEF_SUMMARY        select * from :out_debrief_summary;
 END;
 
@@ -54,3 +54,4 @@ select * from DEBRIEF_SUMMARY where "KEY" = 'AplTotalElapsedTime';
 
 -- Debrief all models by segment
 select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_Performance"(DEBRIEF_PROPERTY, DEBRIEF_METRIC);
+select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Classification_MultiClass_Performance_by_Class"(DEBRIEF_PROPERTY, DEBRIEF_METRIC);

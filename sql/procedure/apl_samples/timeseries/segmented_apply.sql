@@ -30,7 +30,7 @@ DO BEGIN
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '8'));
     :header.insert(('ModelFormat', 'bin'));
-    :header.insert(('MaxTasks', '4'));  -- define nb parallel tasks to use for train
+    :header.insert(('MaxTasks', '2'));  -- define nb parallel tasks to use for train
 
     :config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define the column used as the segmentation colum
     :config.insert(('APL/ApplyLastTimePoint', '2001-12-29 00:00:00',null));

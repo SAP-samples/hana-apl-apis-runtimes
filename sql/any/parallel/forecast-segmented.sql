@@ -47,7 +47,7 @@ DO BEGIN
     :header.insert(('ModelFormat', 'bin'));
 --    :header.insert(('ProgressLog','true'));
 --    :header.insert(('Cancelable','true'));   
-    :header.insert(('MaxTasks', '4'));  -- define nb parallel tasks to use for forecast
+    :header.insert(('MaxTasks', '2'));  -- define nb parallel tasks to use for forecast
 
     :config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define the column used as the segmentation colum
     :config.insert(('APL/Horizon', '20',null));

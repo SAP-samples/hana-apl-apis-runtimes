@@ -45,5 +45,6 @@ DO BEGIN
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesCorrelation"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesContribution"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_Performance"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Classification_MultiClass_Performance_by_Class"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Classification_MultiClass_ConfusionMatrix"(:out_debrief_property, :out_debrief_metric);
 END;
