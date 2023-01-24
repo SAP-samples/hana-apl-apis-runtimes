@@ -1,7 +1,7 @@
 -- ================================================================
 -- @configSQL
 
--- This script is compatible with HANA 2 only
+-- This script is compatible with HANA 2 and HANA Cloud only
 
 -- to use if SYSTEM user or hdbsql tool is not available
 
@@ -11,15 +11,21 @@
 --	 			GRANT AFL__SYS_AFL_APL_AREA_EXECUTE TO <USER NAME that will run this file>;
 -- 				GRANT AFLPM_CREATOR_ERASER_EXECUTE TO <USER NAME that will run this file>;
 --				CALL "_SYS_REPO"."GRANT_ACTIVATED_ROLE" ('sap.pa.apl.base.roles::APL_EXECUTE','<USER NAME that will run this file>')
---			These ones only to be ablme to check status of APL's Delivery Unit
+--			These ones only to be able to check status of APL's Delivery Unit
 -- 				GRANT SELECT ON "_SYS_REPO"."DELIVERY_UNITS" TO <USER NAME that will run this file>;
 -- 				GRANT SELECT ON "_SYS_REPO"."ACTIVE_OBJECT" TO <USER NAME that  will run this file>;
+--			This one to be able to check script server
+--				GRANT SERVICE ADMIN TO <USER NAME that  will run this file>;
 -- HANA Cloud
 --			Standard APL rights
 --	 			GRANT AFL__SYS_AFL_APL_AREA_EXECUTE TO <USER NAME that will run this file>;
 -- 				GRANT AFLPM_CREATOR_ERASER_EXECUTE TO <USER NAME that will run this file>;
 --				GRANT "sap.pa.apl.base.roles::APL_EXECUTE" TO <USER NAME that will run this file>;
+--			This one to be able to check script server
+--				GRANT SERVICE ADMIN TO <USER NAME that  will run this file>;
 
+
+-- recreate these types so we don't depend on a successfull deployment of APL types
 
 -- recreate these types so we don't depend on a successfull deployment of APL types
 
@@ -156,15 +162,15 @@ AS BEGIN
 	 END IF;
 END;
 
+-- Don't call this function on hce
 CREATE FUNCTION "HAS_EFFECTIVE_APL_PROC"(IN proc_name NVARCHAR(1000))
 RETURNS has_proc BOOLEAN
 LANGUAGE SQLSCRIPT
 SQL SECURITY INVOKER
 AS BEGIN
 	DECLARE nb INT;
-	DECLARE who_am_i NVARCHAR(1000);
+	DECLARE who_am_i NVARCHAR(1000) = current_user;
 	
-    SELECT CURRENT_USER into who_am_i FROM DUMMY;
 	SELECT COUNT(*) into nb FROM "PUBLIC"."EFFECTIVE_PRIVILEGES" 
 		WHERE "USER_NAME" = :who_am_i
 		AND "SCHEMA_NAME" = 'SAP_PA_APL'
@@ -181,48 +187,49 @@ END;
 
 
 
+-- Don't call this function on hce
+
 CREATE FUNCTION "CAN_CALL_APL_PROC"(IN proc_name NVARCHAR(1000))
 RETURNS can_call NVARCHAR(1000)
 LANGUAGE SQLSCRIPT
 SQL SECURITY INVOKER
 AS BEGIN
 	DECLARE nb INT;
-	DECLARE who_am_i NVARCHAR(1000);
-	
-    SELECT CURRENT_USER into who_am_i FROM DUMMY;
-    SELECT COUNT(*) into nb FROM granted_roles WHERE "GRANTEE"=:who_am_i AND "ROLE_NAME"='sap.pa.apl.base.roles::APL_EXECUTE';
-    IF :nb<>1
-    THEN
-        can_call = 'APL_GLOBAL_ROLE_NOT_GRANTED';
-    ELSE
-        SELECT COUNT(*) into nb FROM "PUBLIC"."PROCEDURES" WHERE "SCHEMA_NAME" = 'SAP_PA_APL' AND "PROCEDURE_NAME"=:proc_name;
-        IF :nb <>1
-        THEN
-            can_call = 'APL_GLOBAL_CODE_NOT_HERE';
-        ELSE
-            IF "HAS_EFFECTIVE_APL_PROC"(:proc_name) = FALSE
-            THEN
-                can_call = 'APL_CODE_NOT_IN_EFFECTIVE_PRIVILEGES';
-            ELSE
-                can_call = 'OK';
-            END IF;
-        END IF;
+	DECLARE who_am_i NVARCHAR(1000) = CURRENT_USER;
+
+	SELECT COUNT(*) into nb FROM granted_roles WHERE "GRANTEE"=:who_am_i AND "ROLE_NAME"='sap.pa.apl.base.roles::APL_EXECUTE';
+	IF :nb<>1
+	THEN
+		can_call = 'APL_GLOBAL_ROLE_NOT_GRANTED';
+	ELSE
+		SELECT COUNT(*) into nb FROM "PUBLIC"."PROCEDURES" WHERE "SCHEMA_NAME" = 'SAP_PA_APL' AND "PROCEDURE_NAME"=:proc_name;
+		IF :nb <>1
+		THEN
+			can_call = 'APL_GLOBAL_CODE_NOT_HERE';
+		ELSE
+			IF "HAS_EFFECTIVE_APL_PROC"(:proc_name) = FALSE
+			THEN
+				can_call = 'APL_CODE_NOT_IN_EFFECTIVE_PRIVILEGES';
+			ELSE
+				can_call = 'OK';
+			END IF;
+		END IF;
 	END IF;
 END;
 
+-- Don't call this procedure on hce
 
 CREATE PROCEDURE "CHECK_CAN_CALL_APL_PROCEDURE"(IN proc_name NVARCHAR(1000), OUT can_call NVARCHAR(1000), OUT results "CHECK_RESULTS_T")
 LANGUAGE SQLSCRIPT 
 SQL SECURITY INVOKER
 AS
 BEGIN 
-	DECLARE who_am_i NVARCHAR(1000);
+	DECLARE who_am_i NVARCHAR(1000) = CURRENT_USER;
     DECLARE CONTINUE HANDLER FOR SQLEXCEPTION	
 	-- DECLARE EXIT HANDLER FOR SQLEXCEPTION	
 	BEGIN
-		:results.insert(('CHECK_TRAIN_PROCEDURE_MODE SQLScript error:', ::SQL_ERROR_CODE, ::SQL_ERROR_MESSAGE));
+		:results.insert(('CHECK_CAN_CALL_APL_PROCEDURE SQLScript error:', ::SQL_ERROR_CODE, ::SQL_ERROR_MESSAGE));
 	END;
-    SELECT CURRENT_USER into who_am_i FROM DUMMY;
     SELECT "CAN_CALL_APL_PROC"(:proc_name) into can_call FROM DUMMY;
 
     IF :can_call = 'APL_GLOBAL_CODE_NOT_HERE'
@@ -260,6 +267,7 @@ BEGIN
 	DECLARE status_1 NVARCHAR(1000);
 	DECLARE status_2 NVARCHAR(1000);
 	DECLARE text_1 NVARCHAR(1000);
+	DECLARE database_name NVARCHAR(1000);
 	DECLARE expected_debrief_version NVARCHAR(1000);
 	DECLARE nb INTEGER;
 	DECLARE du_version integer;
@@ -267,6 +275,7 @@ BEGIN
 	DECLARE is_hce BOOLEAN = "IS_HCE"();
 	DECLARE bad_apis NCLOB;
 	DECLARE manifest_results "CHECK_RESULTS_T";
+	DECLARE user_name nvarchar(1000) = CURRENT_USER;
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION	
 	BEGIN
 		:results.insert(('CHECK_APL_INSTALL SQLScript error:', ::SQL_ERROR_CODE, ::SQL_ERROR_MESSAGE));
@@ -278,6 +287,10 @@ BEGIN
 
 	:results.insert(('Checking installation of APL plugin','',''));
 	:results.insert(('____________________________','',''));
+
+	SELECT "DATABASE_NAME" into database_name FROM M_DATABASE;
+	:results.insert(('ANALYSE OF DATABASE','',:database_name));
+	:results.insert(('as user','',:user_name));
 
 	SELECT COUNT(*) into nb FROM M_PLUGIN_MANIFESTS WHERE "PLUGIN_NAME"='SAP_AFL_SDK_APL';
 	IF :nb = 0
@@ -337,6 +350,17 @@ BEGIN
 		:results.insert(('Good # of descriptions of APL low level calls','OK',:nb));
 	END IF;
 
+	:results.insert(('Checking registration of APL Table Types','',''));
+	:results.insert(('','',''));
+	SELECT distinct TABLE_NAME from sys.tables where schema_name='SAP_PA_APL' and table_name like 'sap.pa.apl%';
+	SELECT count(distinct TABLE_NAME) into nb from sys.tables where schema_name='SAP_PA_APL' and table_name like 'sap.pa.apl%';
+	IF :nb <95
+	THEN
+		:results.insert(('Bad # of APL Table types','ISSUE',:nb));
+	ELSE
+		:results.insert(('Good # of APL Table Types','OK',:nb));
+	END IF;
+
 	:results.insert(('Checking registration of high level APL API (APL DU or Hana Cloud SQLAutoContent)','',''));
 	:results.insert(('','',''));
 	IF :is_hce = false
@@ -362,15 +386,25 @@ BEGIN
 	ELSE
 		:results.insert(('Main APL role sap.pa.apl.base.roles::APL_EXECUTE is declared','OK',:nb));
 	END IF;
-	SELECT COUNT(*) into nb FROM "M_TABLES" WHERE "SCHEMA_NAME" = 'SAP_PA_APL' AND "TABLE_NAME" LIKE 'sap.pa.apl.%';
-	IF :nb < 170
+	SELECT COUNT(DISTINCT "TABLE_NAME") into nb FROM "M_TABLES" WHERE "SCHEMA_NAME" = 'SAP_PA_APL' AND "TABLE_NAME" LIKE 'sap.pa.apl.%';
+	IF :is_hce = false
 	THEN
-		:results.insert(('Bad # of APL types and tables','WARNING',:nb || ' instead of at least 170 but maybe you are checking APL < 2209'));
+		IF :nb < 172
+		THEN
+			:results.insert(('Bad # of APL types and tables','WARNING',:nb || ' instead of at least 172 but maybe you are checking APL < 2209'));
+		ELSE
+			:results.insert(('Good # of APL types and tables','OK',:nb));
+		END IF;
 	ELSE
-		:results.insert(('Good # of APL types and tables','OK',:nb));
+		IF :nb < 126
+		THEN
+			:results.insert(('Bad # of APL types and tables','WARNING',:nb || ' instead of at least 126 but maybe you are checking APL < 2223'));
+		ELSE
+			:results.insert(('Good # of APL types and tables','OK',:nb));
+		END IF;
 	END IF;
-    SELECT COUNT(*) into nb  FROM  (SELECT "PROCEDURE_NAME" FROM "PUBLIC"."PROCEDURES" WHERE "SCHEMA_NAME" = 'SAP_PA_APL' AND "PROCEDURE_NAME" LIKE 'sap.pa.apl.%' UNION ALL SELECT "FUNCTION_NAME" FROM "PUBLIC"."FUNCTIONS" WHERE "SCHEMA_NAME" = 'SAP_PA_APL' AND "FUNCTION_NAME" LIKE 'sap.pa.apl.%') ;
-	IF :nb <154
+    SELECT COUNT(*) into nb FROM  (SELECT DISTINCT "PROCEDURE_NAME" FROM "PUBLIC"."PROCEDURES" WHERE "SCHEMA_NAME" = 'SAP_PA_APL' AND "PROCEDURE_NAME" LIKE 'sap.pa.apl.%' UNION ALL SELECT DISTINCT "FUNCTION_NAME" FROM "PUBLIC"."FUNCTIONS" WHERE "SCHEMA_NAME" = 'SAP_PA_APL' AND "FUNCTION_NAME" LIKE 'sap.pa.apl.%') ;
+	IF :nb <156
 	THEN
 		:results.insert(('Bad # of high level APL APIs','WARNING',:nb ||' instead of at least 154 but maybe you are checking APL < 2209'));
 	ELSE
@@ -388,6 +422,7 @@ BEGIN
 	:results.insert(('Checking installation of APL plugin','Done',''));
 END;
 
+
 CREATE PROCEDURE "CHECK_APL_STRANGE_ISSUES"(OUT results "CHECK_RESULTS_T")
 LANGUAGE SQLSCRIPT 
 SQL SECURITY INVOKER
@@ -396,7 +431,7 @@ BEGIN
 	DECLARE is_hce BOOLEAN = "IS_HCE"();
 	DECLARE apl_apis_available INTEGER;
 	DECLARE effective_apl_apis_available INTEGER;
-	DECLARE who_am_i NVARCHAR(1000);
+	DECLARE who_am_i NVARCHAR(1000) = CURRENT_USER;
 	DECLARE missing_apis "CHECK_RESULTS_T";
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION	
 	BEGIN
@@ -410,7 +445,6 @@ BEGIN
 	-- So the check is done only for HANA On Premise
 	if :is_hce = False
 	then
-	    SELECT CURRENT_USER into who_am_i FROM DUMMY;
 		SELECT COUNT(*) into effective_apl_apis_available FROM "PUBLIC"."EFFECTIVE_PRIVILEGES" 
 		WHERE "USER_NAME" = :who_am_i
 		AND "SCHEMA_NAME" = 'SAP_PA_APL'
@@ -453,6 +487,7 @@ BEGIN
 	:results.insert(('Checking deployment issues of APL plugin','Done',''));
 END;
 
+
 CREATE PROCEDURE "CHECK_APL_BASIC_RUNTIME"(OUT results "CHECK_RESULTS_T")
 LANGUAGE SQLSCRIPT 
 SQL SECURITY INVOKER
@@ -472,21 +507,24 @@ BEGIN
 	:results.insert(('____________________________','',''));
 	:results.insert(('Checking APL basic run time','',''));
 
-	:results.insert(('Checking PING (direct mode)','',''));
+		:results.insert(('Checking PING (direct mode)','',''));
 	-- use an exec so this code can always be compiled
-	EXECUTE IMMEDIATE 'CALL _SYS_AFL.APL_AREA_PING_PROC(:ping_direct)' into ping_direct;
-	ping_results = SELECT 'ping direct' AS "KEY","name" AS "STATUS","value" AS "DETAILS" FROM :ping_direct;
-    :results.insert(:ping_results);
-	:results.insert(('Calling direct PING successful','OK',''));
-	:results.insert(('Checking PING (proc mode)','',''));
-    CALL "CHECK_CAN_CALL_APL_PROCEDURE"('sap.pa.apl.base::PING',can_call_ping,can_call_ping_results);
-    :results.insert(:can_call_ping_results);
-    -- we always try to do the call : maybe we missed something
+		EXECUTE IMMEDIATE 'CALL _SYS_AFL.APL_AREA_PING_PROC(:ping_direct)' into ping_direct;
+		ping_results = SELECT 'ping direct' AS "KEY","name" AS "STATUS","value" AS "DETAILS" FROM :ping_direct;
+		:results.insert(:ping_results);
+		:results.insert(('Calling direct PING successful','OK',''));
+		:results.insert(('Checking PING (proc mode)','',''));
+	IF 	is_hce = FALSE
+	THEN
+	    CALL "CHECK_CAN_CALL_APL_PROCEDURE"('sap.pa.apl.base::PING',can_call_ping,can_call_ping_results);
+    	:results.insert(:can_call_ping_results);
+   	END IF;
+	-- we always try to do the call : maybe we missed something
     -- use an exec so this code can always been compiled
 	:results.insert(('Try to really call sap.pa.apl.base::PING)','',''));
-    	-- use an exec so this code can always be compiled
-	EXECUTE IMMEDIATE 'CALL "SAP_PA_APL"."sap.pa.apl.base::PING"(:ping_proc)' into ping_proc;
-    ping_results = SELECT 'ping proc' AS "KEY","name" AS "STATUS","value" AS "DETAILS" FROM :ping_proc;
+    -- use an exec so this code can always be compiled
+	 	EXECUTE IMMEDIATE 'CALL "SAP_PA_APL"."sap.pa.apl.base::PING"(:ping_proc)' into ping_proc;
+	    ping_results = SELECT 'ping proc' AS "KEY","name" AS "STATUS","value" AS "DETAILS" FROM :ping_proc;
     :results.insert(:ping_results);
     :results.insert(('Calling proc PING successful','OK',''));
     IF :is_hce = true 
@@ -501,7 +539,6 @@ BEGIN
     END IF;
 	:results.insert(('Checking APL basic run time','Done',''));
 END;
-
 
 CREATE PROCEDURE "ANALYZE_CHECKS"(
 	IN check_results "CHECK_RESULTS_T",
@@ -589,8 +626,6 @@ BEGIN
 	end if;
 END;
 
-
-
 CREATE TYPE "SMALL_ADULT_T" AS TABLE (
 	 "age" INTEGER,
 	 "workclass" NVARCHAR(32),
@@ -608,17 +643,13 @@ CREATE TYPE "SMALL_ADULT_T" AS TABLE (
 	 "native-country" NVARCHAR(32),
 	 "class" INTEGER);
 
-
-
 CREATE COLUMN TABLE "SMALL_ADULT" LIKE "SMALL_ADULT_T";
-
 
 CREATE PROCEDURE "PREPARE_DATA_FOR_CHECK_TRAIN_PROCEDURE_MODE"()
 LANGUAGE SQLSCRIPT
 SQL SECURITY INVOKER
-AS
-BEGIN 
-    TRUNCATE TABLE "SMALL_ADULT";
+AS BEGIN
+	TRUNCATE TABLE "SMALL_ADULT";
 	INSERT INTO "SMALL_ADULT" VALUES (39,'State-gov',77516,'Bachelors',13,'Never married','Adm-clerical','Not-in-family','White','Male',2174,0,40,'United States',0);
 	INSERT INTO "SMALL_ADULT" VALUES (50,'Self-emp-not-inc',83311,'Bachelors',13,'Married civ spouse','Exec managerial','Husband','White','Male',0,0,13,'United States',0);
 	INSERT INTO "SMALL_ADULT" VALUES (38,'Private',215646,'HS-grad',9,'Divorced','Handlers-cleaners','Not-in-family','White','Male',0,0,40,'United States',0);
@@ -1121,8 +1152,6 @@ BEGIN
 	INSERT INTO "SMALL_ADULT" VALUES (72,NULL,303588,'HS-grad',9,'Married civ spouse',NULL,'Husband','White','Male',0,0,20,'United States',1);
 END;
 
-
-
 CREATE PROCEDURE "CHECK_TRAIN_PROCEDURE_MODE"(OUT results "CHECK_RESULTS_T")
 LANGUAGE SQLSCRIPT 
 SQL SECURITY INVOKER
@@ -1137,9 +1166,10 @@ BEGIN
 	DECLARE out_indic "sap.pa.apl.base::BASE.T.INDICATORS";
 	DECLARE model "sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
 	DECLARE cancall_results "CHECK_RESULTS_T";
-	DECLARE who_am_i NVARCHAR(1000);
+	DECLARE who_am_i NVARCHAR(1000) = CURRENT_USER;
 	DECLARE can_call_train NVARCHAR(1000);
 	DECLARE nb INTEGER;
+	DECLARE is_hce BOOLEAN = "IS_HCE"();
     DECLARE CONTINUE HANDLER FOR SQLEXCEPTION	
 	-- DECLARE EXIT HANDLER FOR SQLEXCEPTION	
 	BEGIN
@@ -1150,9 +1180,11 @@ BEGIN
 	
 	CALL "PREPARE_DATA_FOR_CHECK_TRAIN_PROCEDURE_MODE"();
 
-    CALL "CHECK_CAN_CALL_APL_PROCEDURE"('sap.pa.apl.base::CREATE_MODEL_AND_TRAIN',can_call_train,can_call_results);
-    SELECT CURRENT_USER into who_am_i FROM DUMMY;
-    :results.insert(:can_call_results);
+	IF :is_hce = FALSE
+	THEN
+	    CALL "CHECK_CAN_CALL_APL_PROCEDURE"('sap.pa.apl.base::CREATE_MODEL_AND_TRAIN',can_call_train,can_call_results);
+	    :results.insert(:can_call_results);
+	END IF;
     -- we always try to do the call : maybe we missed something
     -- use an exec so this code can always been compiled
 	:results.insert(('Try to really call sap.pa.apl.base::CREATE_MODEL_AND_TRAIN','',''));
@@ -1176,9 +1208,6 @@ BEGIN
 	:results.insert(('Checking runtime train in procedure mode','Done',''));
 END;
 
-
-
-
 CREATE PROCEDURE "CHECK_APL_FULL_INSTALL"(	OUT final_results "CHECK_RESULTS_T")
 LANGUAGE SQLSCRIPT 
 SQL SECURITY INVOKER
@@ -1192,7 +1221,7 @@ BEGIN
 	DECLARE train_procedure_results "CHECK_RESULTS_T";
 	DECLARE who_am_i NVARCHAR(1000);
 	DECLARE nb_issues INT;
-	DECLARE has_scriptserver NVARCHAR(100);
+	DECLARE has_scriptserver NVARCHAR(100) = "HAS_SCRIPTSERVER"();
 	DECLARE error_message NCLOB;
 	DECLARE ERROR_APL condition for SQL_ERROR_CODE 10001;
 	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION	
@@ -1214,10 +1243,9 @@ BEGIN
 	ELSE
 		:prerequisite_results.insert(('===== APL is installed !! =====','OK',''));		
 	END IF;
-	SELECT "HAS_SCRIPTSERVER"() into has_scriptserver FROM DUMMY;
 	IF :has_scriptserver = 'MAYBE' 
 	THEN
-		:prerequisite_results.insert(('===== Script Server cannot be checked !! =====','WARNING','APL needs a script server but it cannot be checked...'));
+		:prerequisite_results.insert(('===== Script Server cannot be checked !! =====','WARNING','APL needs a script server but it cannot be checked with this user...'));
 	END IF;
 	IF :has_scriptserver = 'KO' 
 	THEN
@@ -1229,15 +1257,15 @@ BEGIN
 	END IF;
 	:final_results.insert(:prerequisite_results);
 	
-	IF "HAS_APL"() = TRUE
+	IF "HAS_APL"() = TRUE AND :has_scriptserver <> 'KO'
 	THEN
 		CALL "CHECK_APL_INSTALL"(:install_results);
 		:final_results.insert(:install_results);
     	CALL "CHECK_APL_STRANGE_ISSUES"(:strange_issues_results);
 		:final_results.insert(:strange_issues_results);
-    	CALL "CHECK_APL_BASIC_RUNTIME"(:basic_runtime_results);
+		CALL "CHECK_APL_BASIC_RUNTIME"(:basic_runtime_results);
 		:final_results.insert(:basic_runtime_results);
-    	CALL "CHECK_TRAIN_PROCEDURE_MODE"(:train_procedure_results);
+	 	CALL "CHECK_TRAIN_PROCEDURE_MODE"(:train_procedure_results);
 		:final_results.insert(:train_procedure_results);
     	CALL "ANALYZE_CHECKS"(:final_results,:analyze_results);
     	:final_results.insert(('==============================','',''));
@@ -1245,9 +1273,24 @@ BEGIN
 		:final_results.insert(:analyze_results);
     	:final_results.insert(('==============================','',''));
     	:final_results.insert(('==============================','',''));
+	ELSE
+    	:final_results.insert(('==============================','',''));
+    	:final_results.insert(('Cannot proceed to analysis','ISSUE','No Script Server'));
+    	:final_results.insert(('==============================','',''));
+	END IF;
+	-- keep using LOWER. This is not a mistake
+	SELECT LOWER(SESSION_USER) into who_am_i FROM "DUMMY";
+	IF :who_am_i <> 'check_apl' AND :who_am_i<>'rouser'
+	THEN
+		-- do the final check and pop an sql error
+		-- if an issue is detected
+		SELECT COUNT(*) into nb_issues FROM :final_results WHERE "STATUS" IN ('ISSUE','ERROR');
+		IF :nb_issues > 0
+		THEN
+			SELECT '['||STRING_AGG("KEY" || ' ' || COALESCE("STATUS",'') || ' ' || COALESCE("DETAILS",'') || CHAR(10))||']' INTO error_message FROM :final_results;		
+			SIGNAL ERROR_APL set MESSAGE_TEXT = :error_message;
+		END IF;
 	END IF;
 END;
 
-
 CALL "CHECK_APL_FULL_INSTALL"(?);
-
