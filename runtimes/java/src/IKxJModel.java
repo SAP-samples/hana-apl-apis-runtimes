@@ -11,7 +11,7 @@
 package KxJRT;
 
 /**
- * The <a href="http://www.kxen.com">Automatic Analytics</a> Java model interface. 
+ * The Automatic Analytics Java model interface. 
  * Generated Java code for K2R and K2S implements this interface.
  * @version 1.0
  */

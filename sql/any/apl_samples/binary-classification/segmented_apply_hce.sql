@@ -1,0 +1,64 @@
+-- @required(hanaMinimumVersion,4.00.000)
+-- ================================================================
+-- APL_AREA, APPLY_MODEL, using a binary format for the model
+-- This script demonstrates the application of the binary classification model
+-- to predict the target and to get the individual contributions per input
+--
+-- Assumption 1: The users & privileges have been created & granted (see apl_admin_ex.sql).
+-- Assumption 2: There's a valid trained model (created by APL) in the MODEL_TRAIN_BIN table.
+--  @depend(segmented_create_train_hce.sql)
+connect USER_APL password Password1;
+SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+
+drop table APPLY_OPERATION_LOG;
+create table APPLY_OPERATION_LOG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
+
+drop table APPLY_SUMMARY;
+create table APPLY_SUMMARY like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.SUMMARY";
+
+-- USER_APL.APPLY_OUT definition
+DROP TYPE APPLY_OUT_T;
+CREATE TYPE APPLY_OUT_T AS TABLE  ("KxIndex" BIGINT,"class" INTEGER,"gb_score_class" DOUBLE, "Seg" INTEGER);
+
+DROP TABLE APPLY_OUT;
+CREATE TABLE APPLY_OUT LIKE APPLY_OUT_T;
+
+
+DO BEGIN
+    declare header  "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
+    declare config  "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";
+    declare model   "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
+    declare out_log "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
+    declare out_sum "SAP_PA_APL"."sap.pa.apl.base::BASE.T.SUMMARY";
+    declare apply_out APPLY_OUT_T;
+
+    insert into :model select * from MODEL_TRAIN_BIN;
+    datatset =  SELECT * from "USER_APL"."ADULT01_SORTED";
+
+    :header.insert(('Oid', '#42'));
+    :header.insert(('LogLevel', '2'));
+    :header.insert(('ModelFormat', 'bin'));
+    :header.insert(('MaxTasks', '2'));  -- define nb parallel tasks to use for train
+
+    :config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define the column used as the segmentation colum
+    
+    CALL  _SYS_AFL.APL_APPLY_MODEL__OVERLOAD_4_3(:header, :model,  :config, :datatset,apply_out,out_log,out_sum);
+   
+    insert into  APPLY_OUT              select * from :apply_out;
+    insert into  APPLY_OPERATION_LOG    select * from :out_log;
+    insert into  APPLY_SUMMARY          select * from :out_sum;
+END;
+
+SELECT "Seg", count(*) from APPLY_OUT group by "Seg";
+
+-- Nb trained models   
+select count(*) from  APPLY_SUMMARY where "KEY" = 'AplTaskElapsedTime';
+
+-- Average time to train a segment  
+select AVG(to_double("VALUE")) from APPLY_SUMMARY where "KEY" = 'AplTaskElapsedTime';
+
+-- Total time 
+select * from APPLY_SUMMARY where "KEY" = 'AplTotalElapsedTime';
+
+-- Get models in error
+select * from APPLY_OPERATION_LOG where "LEVEL" = 0;

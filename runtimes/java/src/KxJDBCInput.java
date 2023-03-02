@@ -99,7 +99,6 @@ public class KxJDBCInput implements IKxJModelInput {
 			mMissing = false;
 		}
 		catch( SQLException e ) {
-			lValue = (float)0.0;
 			mMissing = true;
 		}
 		return lValue;
@@ -112,7 +111,6 @@ public class KxJDBCInput implements IKxJModelInput {
 			mMissing = false;
 		}
 		catch( SQLException e ) {
-			lValue = 0.0;
 			mMissing = true;
 		}
 		return lValue;

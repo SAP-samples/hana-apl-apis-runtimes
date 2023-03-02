@@ -125,7 +125,7 @@ bool hasFiveWeeks(int iYear, int iMonth)
 		return true;
 	else if ((30 == lNbDays) && ((2 == lFirstDay) || (3 == lFirstDay)))
 		return true;
-	else if ((29 == lNbDays) && (3 == lNbDays))
+	else if ((29 == lNbDays) && (3 == lFirstDay))
 		return true;
 	else
 		return false;

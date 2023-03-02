@@ -15,7 +15,7 @@ import java.lang.*;
 import java.util.TreeMap;
 
 /**
- * Applies a <a href="http://www.kxen.com">Automatic Analytics</a> Java model on a line
+ * Applies a Automatic Analytics Java model on a line
  * @see KxJRT.KxInputReader KxInputReader
  */
 public class KxJApplyOnInput {

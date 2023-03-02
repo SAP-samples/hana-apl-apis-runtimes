@@ -14,7 +14,7 @@ import java.io.*;
 import java.lang.*;
 
 /**
- * Applies a <a href="http://www.kxen.com">Automatic Analytics</a> Java model on a flat file
+ * Applies a Automatic Analytics Java model on a flat file
  * with variable names on the first line. 
  * @see KxJRT.KxFileReaderWithNames KxFileReaderWithNames
  * @see KxJRT.KxFileReader KxFileReader

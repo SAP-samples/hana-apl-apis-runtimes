@@ -58,7 +58,7 @@ public class KxFileReaderWithNames extends KxFileReader
 		}
 	}
 
-	public String[] getVariables() {
+	final public String[] getVariables() {
 		return mVariables;
 	}
 	

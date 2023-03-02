@@ -176,13 +176,15 @@ public class KxJApplyOnJDBC {
 			lApplyScore = new KxJApplyOnJDBC(lModel);
 
 			loadDriver(lDriver);
-				
-			Connection lConnection = newConnection(lDatabase, lUser, lPwd);
-			Statement lStatement = lConnection.createStatement();
 
-			ResultSet lResult = lStatement.executeQuery(lQuery);
+			try(Connection lConnection = newConnection(lDatabase, lUser, lPwd);
+				Statement lStatement = lConnection.createStatement())
+			{
 
-			lApplyScore.apply(lResult, lOut);
+				ResultSet lResult = lStatement.executeQuery(lQuery);
+
+				lApplyScore.apply(lResult, lOut);
+			}
 
 		} catch(Exception e )
 		{

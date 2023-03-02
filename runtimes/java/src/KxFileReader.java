@@ -146,6 +146,9 @@ public class KxFileReader implements IKxJModelInput {
 		while (lCurrentLine.equals("")) {
 			try {
 				lCurrentLine = mBuffer.readLine();
+				if (lCurrentLine == null) {
+					return false;
+				}
 			}
 			catch ( IOException e ) {
 				return false;
@@ -174,30 +177,6 @@ public class KxFileReader implements IKxJModelInput {
 		mFields = new String[lFieldsCount];
 	}
 	
-	private void printLineError() {
-		KxLog.getInstance().print("More fields are found\n");
-		System.err.println( "error : found more fields than exprected line "+
-							mRowCounter +".");
-	}
-
-	private void printFieldError( int iFieldIndex ) {
-		KxLog.getInstance().print( "warning : invalid type for field "+
-								   iFieldIndex+	" line " + mRowCounter + "." );
-	}
-
-	private void printEmptyField( int iFieldIndex ) {
-		if (null != mNameFields) {
-			KxLog.getInstance().print( "warning : empty value for " + 
-								mNameFields[iFieldIndex] +" at line " + 
-								mRowCounter + "." );
-		}
-		else {
-			KxLog.getInstance().print( "warning : empty value for fields " + 
-								iFieldIndex +" at line " + 
-								mRowCounter + "." );
-		}
-	}
-
 	public boolean isEmpty( int iVariableIndex, String iMissingString ) {
 		String lValue = mFields[ iVariableIndex ];
 		if( lValue == null 

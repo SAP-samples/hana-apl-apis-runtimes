@@ -81,7 +81,7 @@ public class DateUtils {
 		lScalar	+= (iYear * 365 + iYear / 4 - iYear / 100 + iYear / 400);
 		return lScalar;
 	}
-	public static int getDayInMonth(Date iDate) {
+	public static int getDaysInMonth(Date iDate) {
 		Calendar lCalendar = Calendar.getInstance();
 		lCalendar.setTime(iDate);
 		int lMonthDay = 31;
@@ -159,14 +159,14 @@ public class DateUtils {
 	}
 
 	public static boolean hasFiveWeeks(Date iDate) {
-		int lMonthDay = getDayInMonth(iDate);
+		int lNbDays = getDaysInMonth(iDate);
 		int lFirstDay = getDayOfWeek(iDate);
 
-		if ((31 == lMonthDay) && (lFirstDay >= 1) && (lFirstDay <=3))
+		if ((31 == lNbDays) && (lFirstDay >= 1) && (lFirstDay <=3))
 		return true;
-		else if ((30 == lMonthDay) && ((2 == lFirstDay) || (3 == lFirstDay)))
+		else if ((30 == lNbDays) && ((2 == lFirstDay) || (3 == lFirstDay)))
 			return true;
-		else if ((29 == lMonthDay) && (3 == lMonthDay))
+		else if ((29 == lNbDays) && (3 == lFirstDay))
 			return true;
 		else
 			return false;
@@ -209,7 +209,7 @@ public class DateUtils {
 			lWMonth1 = 4 + (l5Weeks ? 1 : 0);
 		}
 
-		int lNbDaysInMonth = getDayInMonth(iDate);
+		int lNbDaysInMonth = getDaysInMonth(iDate);
 
 		Calendar lNewDate = Calendar.getInstance();
 		lNewDate.set(lCalendar.get(Calendar.YEAR),

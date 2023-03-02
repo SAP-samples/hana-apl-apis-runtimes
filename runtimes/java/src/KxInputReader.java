@@ -59,17 +59,6 @@ public class KxInputReader implements IKxJModelInput {
 		}
 	}
 	
-	private void printLineError() {
-		KxLog.getInstance().print("More fields are found\n");
-		System.err.println( "error : found more fields than exprected line "+
-							mRowCounter +".");
-	}
-
-	private void printFieldError( int iFieldIndex ) {
-		KxLog.getInstance().print( "warning : invalid type for field "+
-								   iFieldIndex+	" line " + mRowCounter + "." );
-	}
-
 	private void printEmptyField( int iFieldIndex ) {
 		KxLog.getInstance().print("warning : empty value for fields " + 
 								  iFieldIndex +" at line " + 
