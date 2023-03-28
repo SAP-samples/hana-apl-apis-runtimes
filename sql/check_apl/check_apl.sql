@@ -1346,7 +1346,7 @@ BEGIN
     	:final_results.insert(('==============================','',''));
 	END IF;
 	-- keep using LOWER. This is not a mistake
-	SELECT LOWER(SESSION_USER) into who_am_i FROM "DUMMY";
+	SELECT SUBSTR(LOWER(SESSION_USER),0,9) into who_am_i FROM "DUMMY";
 	IF :who_am_i <> 'check_apl' AND :who_am_i<>'rouser'
 	THEN
 		-- do the final check and pop an sql error
@@ -1354,7 +1354,7 @@ BEGIN
 		SELECT COUNT(*) into nb_issues FROM :final_results WHERE "STATUS" IN ('ISSUE','ERROR');
 		IF :nb_issues > 0
 		THEN
-			SELECT '['||STRING_AGG("KEY" || ' ' || COALESCE("STATUS",'') || ' ' || COALESCE("DETAILS",'') || CHAR(10))||']' INTO error_message FROM :final_results;		
+			SELECT SUBSTR('['||STRING_AGG("KEY" || ' ' || COALESCE("STATUS",'') || ' ' || COALESCE("DETAILS",'') || CHAR(10))||']',0,3000) INTO error_message FROM :final_results;		
 			SIGNAL ERROR_APL set MESSAGE_TEXT = :error_message;
 		END IF;
 	END IF;
