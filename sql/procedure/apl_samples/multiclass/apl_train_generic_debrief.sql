@@ -24,6 +24,7 @@ DO BEGIN
     :config.insert(('APL/EarlyStoppingPatience', '8',null));
     :config.insert(('APL/LearningRate', '.06',null));
     :config.insert(('APL/EvalMetric', 'MultiClassLogLoss',null));
+    :config.insert(('APL/Interactions', 'true',null)); 
 
     :var_role.insert(('class', 'input', null, null, null));
     :var_role.insert(('native-country', 'target', null, null, null));
@@ -45,6 +46,8 @@ DO BEGIN
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesCorrelation"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesContribution"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_Performance"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_InteractionEffect"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_InteractionMatrix"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Classification_MultiClass_Performance_by_Class"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Classification_MultiClass_ConfusionMatrix"(:out_debrief_property, :out_debrief_metric);
 END;

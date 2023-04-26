@@ -40,7 +40,7 @@ as BEGIN
 	end for;
 END;
 
-call  "adult01_fill_segmented_dataset"(4);
+call  "adult01_fill_segmented_dataset"(2);
 
 
 DO BEGIN

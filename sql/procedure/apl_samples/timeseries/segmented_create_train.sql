@@ -39,7 +39,7 @@ as BEGIN
 	end for;
 END;
 
-call "timeseries_fill_segmented_dataset"(4);
+call "timeseries_fill_segmented_dataset"(2);
 
 DO BEGIN
     declare header "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";

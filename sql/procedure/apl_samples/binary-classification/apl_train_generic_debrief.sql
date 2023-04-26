@@ -31,6 +31,7 @@ DO BEGIN
     :config.insert(('APL/VariableSelectionPercentageOfContributionKeptByStep', '0.97',null)); -- default value: 0.95
     :config.insert(('APL/VariableSelectionQualityBar', '0.02',null)); -- default value: 0.01
     :config.insert(('APL/VariableSelectionMaxIterations', '4',null)); -- default value: 2
+    :config.insert(('APL/Interactions', 'true',null)); 
 
     :var_role.insert(('class', 'target', null, null, null));
 
@@ -56,5 +57,7 @@ DO BEGIN
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesCorrelation"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesContribution"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_Performance"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_InteractionEffect"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_InteractionMatrix"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Classification_BinaryClass_ConfusionMatrix"(:out_debrief_property, :out_debrief_metric);
 END;
