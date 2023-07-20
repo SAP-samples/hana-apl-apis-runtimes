@@ -104,7 +104,7 @@ define(['./dateCoder'], function(dateCoder) {
      *
      * @return  {number}  The normalized contribution value
      */
-    AutoEngine.prototype._getNormalizedContribution = function(influencer, variable, contributionValue) {
+    AutoEngine.prototype._getNormalizedContribution = function(influencer, variable, contributionValue, decisionClassIndex) {
         // We need both: overall centered stddev and per variable contribution mean
         var contributionNormalization = this._getCenteredContributionNormalization();
         if ((contributionNormalization == null || contributionNormalization.stdDev == null)) {
@@ -124,12 +124,12 @@ define(['./dateCoder'], function(dateCoder) {
      * @param  {number}  contribution  The native contribution value
      * @param  {array}   interactions  An array that contains the interactions with all other influencers (AutoGB only)
      */
-    AutoEngine.prototype._buildContribution = function(influencer, variable, contribution, interactions) {
+    AutoEngine.prototype._buildContribution = function(influencer, variable, contribution, interactions, decisionClassIndex) {
 
         let contributionObject = {
             "influencerName": variable,
             "influencerContribution": contribution,
-            "normalizedContribution": this._getNormalizedContribution(influencer, variable, contribution)
+            "normalizedContribution": this._getNormalizedContribution(influencer, variable, contribution, decisionClassIndex)
         };
 
         if (interactions) {
@@ -624,7 +624,7 @@ define(['./dateCoder'], function(dateCoder) {
                 influencerName += dateCoder.getTransformationSuffix(influencer.transformation);
             }
 
-            return that._buildContribution(influencer, influencerName, contributionValue);
+            return that._buildContribution(influencer, influencerName, contributionValue, null);
         });
 
         // update score based on target condition
@@ -813,7 +813,7 @@ define(['./dateCoder'], function(dateCoder) {
         });
 
         // Get the decision class itself from the index
-        prediction.decision = this._model.info.target.categories[prediction.classIndex];
+        prediction.decision = this._model.info.target.categories[prediction.classIndex].key;
 
         return prediction;
     };
@@ -1368,7 +1368,7 @@ define(['./dateCoder'], function(dateCoder) {
                     });
                 }
 
-                contribs.push(that._buildContribution(influencerDef, influencerName, shapValue * stdDev, featureInteractions));
+                contribs.push(that._buildContribution(influencerDef, influencerName, shapValue * stdDev, featureInteractions, decisionClass));
             }
             return contribs;
         }, []);
@@ -1388,14 +1388,16 @@ define(['./dateCoder'], function(dateCoder) {
      *
      * @return  {number}  The normalized contribution value
      */
-    KGBEngine.prototype._getNormalizedContribution = function(influencer, variable, contributionValue) {
-        var contributionNormalization = this._getContributionNormalization();
+    KGBEngine.prototype._getNormalizedContribution = function(influencer, variable, contributionValue, decisionClassIndex) {
+        var stdDev = null
 
-        if ((contributionNormalization == null || contributionNormalization.stdDev == null)) {
-            throw new Error("Error while trying to compute the normalized contribution: overall 'stdDev' properties are missing.");
+        if (this._model.info.modelType == this.Constants.MULTI_CLASSIFICATION) {
+            stdDev = this._model.info.target.categories[decisionClassIndex].shapStdDev
+        } else {
+            stdDev = this._getContributionNormalization().stdDev
         }
 
-        return contributionValue / contributionNormalization.stdDev;
+        return contributionValue / stdDev;
     };
 
     /*

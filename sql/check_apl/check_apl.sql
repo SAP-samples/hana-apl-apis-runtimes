@@ -192,6 +192,27 @@ AS BEGIN
 	END IF;
 END;
 
+CREATE FUNCTION "HAS_RIGHT_TO_OBJECT"(
+	IN USER_NAME NVARCHAR(100),
+	IN RIGHT_NAME NVARCHAR(100),
+	IN SCHEMA_NAME NVARCHAR(100),
+	IN OBJECT_NAME NVARCHAR(100))
+RETURNS has_right BOOLEAN
+LANGUAGE SQLSCRIPT
+SQL SECURITY INVOKER
+DETERMINISTIC
+AS BEGIN
+	DECLARE Nb INT DEFAULT 0;
+	SELECT COUNT(*) into nb FROM "SYS"."EFFECTIVE_PRIVILEGES" WHERE "USER_NAME"=:USER_NAME AND "OBJECT_NAME"=:OBJECT_NAME AND "SCHEMA_NAME"=:SCHEMA_NAME AND "PRIVILEGE"=:RIGHT_NAME;
+	IF :nb =0 
+	THEN
+		has_right = FALSE;
+	ELSE
+		has_right = TRUE;
+	END IF;
+END;
+
+
 CREATE FUNCTION "HAS_SCRIPTSERVER"()
 RETURNS has_scriptserver NVARCHAR(100)
 LANGUAGE SQLSCRIPT
@@ -336,6 +357,7 @@ BEGIN
 	DECLARE text_1 NVARCHAR(1000);
 	DECLARE database_name NVARCHAR(1000);
 	DECLARE expected_debrief_version NVARCHAR(1000);
+	DECLARE du_versions NVARCHAR(1000);
 	DECLARE nb INTEGER;
 	DECLARE du_version integer;
 	DECLARE du_date DATETIME = NULL;
@@ -362,13 +384,13 @@ BEGIN
 	SELECT COUNT(*) into nb FROM M_PLUGIN_MANIFESTS WHERE "PLUGIN_NAME"='SAP_AFL_SDK_APL';
 	IF :nb = 0
 	THEN
-		:results.insert(('No APL manifest','ISSUE',:nb));
+		:results.insert(('No APL manifest','ISSUE','APL plugin is probably not registered (no manifest)'));
 	ELSE	
 		manifest_results = SELECT 'APL Manifest' AS "KEY","KEY" AS "STATUS","VALUE" AS "DETAILS" FROM M_PLUGIN_MANIFESTS WHERE "PLUGIN_NAME"='SAP_AFL_SDK_APL';
 		:results.insert(:manifest_results);
 	END IF;
 
-	SELECT "ERROR_TEXT","AREA_STATUS","PACKAGE_STATUS" into text_1,status_1,status_2 FROM "M_PLUGIN_STATUS" WHERE "PLUGIN_NAME"='sap_afl_sdk_apl';
+	SELECT "ERROR_TEXT","AREA_STATUS","PACKAGE_STATUS" into text_1,status_1,status_2 DEFAULT '',',no_area_status','no_package_status' FROM "M_PLUGIN_STATUS" WHERE "PLUGIN_NAME"='sap_afl_sdk_apl' AND "AREA_NAME"='APL_AREA';
 	IF :status_1<>'REGISTRATION SUCCESSFUL' OR :status_2<>'REGISTRATION SUCCESSFUL'
 	THEN
 		:results.insert(('Bad high level status of APL AFL plugin','ISSUE',:status_1 || '/' || :status_2));
@@ -376,6 +398,18 @@ BEGIN
 	ELSE
 		:results.insert(('Good high level status of APL AFL install','OK',:status_1));	
 	END IF;
+
+	SELECT SUBSTR(STRING_AGG("ERROR_TEXT",','),0,1000) into status_1 DEFAULT 'no trace' FROM "M_PLUGIN_STATUS" WHERE "PLUGIN_NAME"='SAP_AFL_SDK_APL' AND ("AREA_STATUS"<>'REGISTRATION SUCCESSFUL' OR "PACKAGE_STATUS"<>'REGISTRATION_SUCCESSFUL');
+	IF :status_1 <>'no trace'
+	THEN
+		:results.insert(('','',''));
+		:results.insert(('There are traces of previous failing registrations of low level APL API','WARNING','Check the whole table M_PLUGIN_MANIFEST'));
+		:results.insert(('Error text from previous registrations failures','WARNING',:status_1));
+		:results.insert(('','',''));
+	ELSE
+		:results.insert(('No detected previous failing registrations of low level APL API','OK',''));
+	END IF;
+
 	:results.insert(('Checking registration of low level APL API','',''));
 	:results.insert(('','',''));
 	SELECT COUNT(*) into nb FROM "SYS"."AFL_AREAS" WHERE "AREA_NAME"='APL_AREA';
@@ -417,29 +451,24 @@ BEGIN
 		:results.insert(('Good # of descriptions of APL low level calls','OK',:nb));
 	END IF;
 
-	:results.insert(('Checking registration of APL Table Types','',''));
-	:results.insert(('','',''));
-	SELECT distinct TABLE_NAME from sys.tables where schema_name='SAP_PA_APL' and table_name like 'sap.pa.apl%';
-	SELECT count(distinct TABLE_NAME) into nb from sys.tables where schema_name='SAP_PA_APL' and table_name like 'sap.pa.apl%';
-	IF :nb <95
-	THEN
-		:results.insert(('Bad # of APL Table types','ISSUE',:nb));
-	ELSE
-		:results.insert(('Good # of APL Table Types','OK',:nb));
-	END IF;
-
 	:results.insert(('Checking registration of high level APL API (APL DU or Hana Cloud SQLAutoContent)','',''));
 	:results.insert(('','',''));
 	IF :is_hce = false
 	THEN
-		-- dynamic sql because DELIVERY_UNIT table does not exist on HANA Cloud
-		EXECUTE IMMEDIATE 'SELECT VERSION FROM "_SYS_REPO"."DELIVERY_UNITS" WHERE DELIVERY_UNIT=''HCO_PA_APL''' INTO du_version;		
-		EXECUTE IMMEDIATE 'SELECT LAST_UPDATE FROM "_SYS_REPO"."DELIVERY_UNITS" WHERE DELIVERY_UNIT=''HCO_PA_APL''' INTO du_date;		
-		:results.insert(('APL DU Version','',:du_version));
-		:results.insert(('APL DU Update date','',du_date));
+		IF "HAS_RIGHT_TO_OBJECT"(CURRENT_USER,'SELECT','_SYS_REPO','DELIVERY_UNITS') = TRUE
+		THEN
+			-- dynamic sql because DELIVERY_UNIT table does not exist on HANA Cloud
+			EXECUTE IMMEDIATE 'SELECT VERSION,LAST_UPDATE FROM "_SYS_REPO"."DELIVERY_UNITS" WHERE DELIVERY_UNIT=''HCO_PA_APL''' INTO du_version,du_date DEFAULT '-1','1964/01/16';		
+			:results.insert(('APL DU Version','',:du_version));
+			:results.insert(('APL DU Update date','',du_date));
+		ELSE
+			:results.insert(('Cannot check version of APL Delivery Unit','WARNING','Please execute: GRANT SELECT ON "_SYS_REPO"."DELIVERY_UNITS" TO ' || CURRENT_USER));
+			du_version='-1';
+			du_date='1964/01/16';
+		END IF;
 	END IF;
 
-	SELECT STRING_AGG("ROLE_NAME",','),COUNT(*) into status_1,nb FROM "ROLES" WHERE "ROLE_NAME" IN ('AFLPM_CREATOR_ERASER_EXECUTE','AFL__SYS_AFL_APL_AREA_EXECUTE','sap.pa.apl.base.roles::APL_EXECUTE');
+	SELECT STRING_AGG("ROLE_NAME",','),COUNT(*) into status_1,nb DEFAULT 'No APL role',0 FROM "ROLES" WHERE "ROLE_NAME" IN ('AFLPM_CREATOR_ERASER_EXECUTE','AFL__SYS_AFL_APL_AREA_EXECUTE','sap.pa.apl.base.roles::APL_EXECUTE');
 	IF :nb <>3 
 	THEN
 		:results.insert(('Bad # of APL roles','ISSUE','Only ' || :status_1 || ' roles are declared. Expected AFLPM_CREATOR_ERASER_EXECUTE,AFL__SYS_AFL_APL_AREA_EXECUTE,sap.pa.apl.base.roles::APL_EXECUTE' ));
@@ -477,11 +506,46 @@ BEGIN
 	ELSE
 		:results.insert(('Good # of high level APL APIs','OK',:nb));
 	END IF;
-	
 	IF :is_hce = FALSE
 	THEN
-    	EXECUTE IMMEDIATE 'SELECT SUBSTR_REGEXPR(''\d+\.\d+\.\d+\.\d+'' IN CAST("CDATA" AS NVARCHAR(1000))) FROM _SYS_REPO.ACTIVE_OBJECT WHERE "DELIVERY_UNIT"=''HCO_PA_APL'' AND "PACKAGE_ID"=''sap.pa.apl.debrief.internal.entity'' AND "OBJECT_NAME"=''EXPECTED_VERSION''' INTO expected_debrief_version;
-		:results.insert(('Expected debrief version parsed from SQL code','',:expected_debrief_version));
+		IF "HAS_RIGHT_TO_OBJECT"(CURRENT_USER,'SELECT','_SYS_REPO','ACTIVE_OBJECT') = TRUE
+		THEN
+			EXECUTE IMMEDIATE 'SELECT SUBSTR(STRING_AGG(COALESCE("DU_VERSION",''No DU version''),'',''),0,1000) AS "DU Versions",COUNT(*) AS "Nb DU Versions" FROM  (SELECT DISTINCT("DU_VERSION") FROM "_SYS_REPO"."ACTIVE_OBJECT" WHERE "DELIVERY_UNIT"=''HCO_PA_APL'' ORDER BY "DU_VERSION")' INTO du_versions,nb DEFAULT 'NO DU Version',0;
+			IF :nb >1
+			THEN
+				:results.insert(('APL APIs are coming from several APL DUs','ISSUE',:du_versions));
+			ELSE
+				:results.insert(('APL APIs are coming from one APL DU','OK',:du_versions));
+				if :du_versions <> :du_version
+				THEN
+					IF du_version <> -1
+					THEN
+						:results.insert(('APL APIs is not coming from expected APL DU','ISSUE',:du_versions || '<>' || du_version));
+					ELSE
+						:results.insert(('Cannot check APL APIs are coming from expected APL DU','WARNING',:du_versions || '<>' || du_version));
+					END IF;
+				ELSE
+					:results.insert(('APL APIs is coming from expected APL DU','OK',:du_versions || '=' || du_version));
+				END IF;
+			END IF;
+		ELSE
+			:results.insert(('Cannot check APL APIs are coming from unique APL DU','WARNING','Please execute: GRANT SELECT ON "_SYS_REPO"."ACTIVE_OBJECT" TO ' || CURRENT_USER));
+		END IF;
+	END IF;
+	IF :is_hce = FALSE
+	THEN
+		IF "HAS_RIGHT_TO_OBJECT"(CURRENT_USER,'SELECT','_SYS_REPO','ACTIVE_OBJECT') = TRUE
+		THEN
+			EXECUTE IMMEDIATE 'SELECT SUBSTR_REGEXPR(''\d+\.\d+\.\d+\.\d+'' IN CAST("CDATA" AS NVARCHAR(1000))) FROM "_SYS_REPO"."ACTIVE_OBJECT" WHERE "DELIVERY_UNIT"=''HCO_PA_APL'' AND "PACKAGE_ID"=''sap.pa.apl.debrief.internal.entity'' AND "OBJECT_NAME"=''EXPECTED_VERSION''' INTO expected_debrief_version DEFAULT 'No debrief';
+			IF expected_debrief_version <> 'No debrief'
+			THEN
+				:results.insert(('Expected debrief version parsed from APL DU code','',:expected_debrief_version));
+			ELSE
+				:results.insert(('No debrief. Old version of APL ?','',''));
+			END IF;
+		ELSE
+			:results.insert(('Cannot check has debrief concept','WARNING','Please execute: GRANT SELECT ON "_SYS_REPO"."ACTIVE_OBJECT" TO ' || CURRENT_USER));
+		END IF;
    	ELSE
 		EXECUTE IMMEDIATE 'SELECT "SAP_PA_APL"."sap.pa.apl.debrief.internal.entity::EXPECTED_VERSION"() FROM DUMMY' INTO expected_debrief_version;
 		:results.insert(('Expected debrief version from running HCE SQL code','',:expected_debrief_version));
@@ -546,7 +610,12 @@ BEGIN
             :results.insert(:missing_apis);
 			:results.insert(('','','!!! You need to redeploy APL DU using hdbalm !!'));
 		ELSE
-			:results.insert(('Effective deployment of APL for user ' ||  :who_am_i,'OK',:apl_apis_available || ' effective APL APIS'));
+			if :effective_apl_apis_available = 0
+			THEN
+				:results.insert(('No deployment of APL for user ' ||  :who_am_i,'ISSUE','0 APL APIS'));
+			ELSE
+				:results.insert(('Effective deployment of APL for user ' ||  :who_am_i,'OK',:apl_apis_available || ' effective APL APIS'));
+			END IF;
 		END IF;
 	ELSE
     	:results.insert(('No known issues to check on HANA Cloud','OK',''));
@@ -574,13 +643,13 @@ BEGIN
 	:results.insert(('____________________________','',''));
 	:results.insert(('Checking APL basic run time','',''));
 
-		:results.insert(('Checking PING (direct mode)','',''));
+	:results.insert(('Checking PING (direct mode)','',''));
 	-- use an exec so this code can always be compiled
-		EXECUTE IMMEDIATE 'CALL _SYS_AFL.APL_AREA_PING_PROC(:ping_direct)' into ping_direct;
-		ping_results = SELECT 'ping direct' AS "KEY","name" AS "STATUS","value" AS "DETAILS" FROM :ping_direct;
-		:results.insert(:ping_results);
-		:results.insert(('Calling direct PING successful','OK',''));
-		:results.insert(('Checking PING (proc mode)','',''));
+	EXECUTE IMMEDIATE 'CALL _SYS_AFL.APL_AREA_PING_PROC(:ping_direct)' into ping_direct;
+	ping_results = SELECT 'ping direct' AS "KEY","name" AS "STATUS","value" AS "DETAILS" FROM :ping_direct;
+	:results.insert(:ping_results);
+	:results.insert(('Calling direct PING successful','OK',''));
+	:results.insert(('Checking PING (proc mode)','',''));
 	IF 	is_hce = FALSE
 	THEN
 	    CALL "CHECK_CAN_CALL_APL_PROCEDURE"('sap.pa.apl.base::PING',can_call_ping,can_call_ping_results);
@@ -590,8 +659,8 @@ BEGIN
     -- use an exec so this code can always been compiled
 	:results.insert(('Try to really call sap.pa.apl.base::PING)','',''));
     -- use an exec so this code can always be compiled
-	 	EXECUTE IMMEDIATE 'CALL "SAP_PA_APL"."sap.pa.apl.base::PING"(:ping_proc)' into ping_proc;
-	    ping_results = SELECT 'ping proc' AS "KEY","name" AS "STATUS","value" AS "DETAILS" FROM :ping_proc;
+	EXECUTE IMMEDIATE 'CALL "SAP_PA_APL"."sap.pa.apl.base::PING"(:ping_proc)' into ping_proc;
+	ping_results = SELECT 'ping proc' AS "KEY","name" AS "STATUS","value" AS "DETAILS" FROM :ping_proc;
     :results.insert(:ping_results);
     :results.insert(('Calling proc PING successful','OK',''));
     IF :is_hce = true 
@@ -1286,10 +1355,11 @@ BEGIN
 	DECLARE strange_issues_results "CHECK_RESULTS_T";
 	DECLARE basic_runtime_results "CHECK_RESULTS_T";
 	DECLARE train_procedure_results "CHECK_RESULTS_T";
-	DECLARE who_am_i NVARCHAR(1000);
+	DECLARE who_am_i NVARCHAR(1000) = CURRENT_USER;
 	DECLARE nb_issues INT;
 	DECLARE has_scriptserver NVARCHAR(100) = "HAS_SCRIPTSERVER"();
 	DECLARE error_message NCLOB;
+	DECLARE version_hana NVARCHAR(1000);
 	DECLARE ERROR_APL condition for SQL_ERROR_CODE 10001;
 	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION	
 	BEGIN
@@ -1297,22 +1367,24 @@ BEGIN
 		SELECT * FROM :final_results;
 	END;
 
+	SELECT "VERSION" into version_hana FROM "M_DATABASE";
 	IF "IS_HCE"() = FALSE 
 	THEN
-		:prerequisite_results.insert(('===== HANA On Premise !! =====','',''));
+		:prerequisite_results.insert(('===== HANA On Premise !! =====','',:version_hana));
 	ELSE
-		:prerequisite_results.insert(('===== HANA Cloud !! =====','',''));
+		:prerequisite_results.insert(('===== HANA Cloud !! =====','',:version_hana));
 	END IF;
 
 	IF "HAS_APL"() = FALSE 
 	THEN
-		:prerequisite_results.insert(('===== APL is NOT installed !! =====','ISSUE',''));
+		:prerequisite_results.insert(('===== APL is NOT installed !! =====','ISSUE','no sap_afl_sdk_apl registered in M_PLUGIN_STATUS'));
 	ELSE
 		:prerequisite_results.insert(('===== APL is installed !! =====','OK',''));		
 	END IF;
 	IF :has_scriptserver = 'MAYBE' 
 	THEN
 		:prerequisite_results.insert(('===== Script Server cannot be checked !! =====','WARNING','APL needs a script server but it cannot be checked with this user...'));
+		:prerequisite_results.insert(('===== Script Server cannot be checked !! =====','WARNING','Please execute GRANT SERVICE ADMIN TO ' || :who_am_i));
 	END IF;
 	IF :has_scriptserver = 'KO' 
 	THEN
@@ -1342,7 +1414,7 @@ BEGIN
     	:final_results.insert(('==============================','',''));
 	ELSE
     	:final_results.insert(('==============================','',''));
-    	:final_results.insert(('Cannot proceed to analysis','ISSUE','No Script Server'));
+    	:final_results.insert(('Cannot proceed to analysis','ISSUE','No Script Server or APL is not installed'));
     	:final_results.insert(('==============================','',''));
 	END IF;
 	-- keep using LOWER. This is not a mistake

@@ -9,17 +9,9 @@ SELECT
 "age", 
 "workclass", 
 to_double("fnlwgt" / .100) as  "fnlwgt",
-"education", 
-"education-num", 
-"marital-status", 
-"occupation", 
-"relationship", 
-"race", 
-"sex", 
 to_real("capital-gain" / .100) as  "capital-gain",
-to_decimal("capital-loss", 10, 3) as "capital-loss", 
+to_decimal("capital-loss", 10, 3) as "capital-loss",
 "hours-per-week",
-"native-country", 
 ADD_DAYS (CURRENT_DATE,"hours-per-week")  as "date",
 "class" FROM "APL_SAMPLES"."ADULT01"
 );
@@ -31,7 +23,7 @@ UPDATE "DATASET_WITH_NULL" SET "age" = null  WHERE "age" =  65;
 UPDATE "DATASET_WITH_NULL" SET "workclass" = null  WHERE "workclass" =  '?';
 UPDATE "DATASET_WITH_NULL" SET "fnlwgt" = null  WHERE "fnlwgt" =  1933660.0;
 UPDATE "DATASET_WITH_NULL" SET "capital-gain" = null  WHERE "capital-gain" =  24070.0;
-UPDATE "DATASET_WITH_NULL" SET "capital-loss" = null  WHERE "capital-loss" =  0;
+UPDATE "DATASET_WITH_NULL" SET "capital-loss" = null  WHERE "capital-loss" =  1408.000;
 UPDATE "DATASET_WITH_NULL" SET "date" = null  WHERE "hours-per-week" = 1;
 
 DO BEGIN
@@ -55,6 +47,15 @@ DO BEGIN
     :header.insert(('ModelFormat', 'bin'));
 
     :config.insert(('APL/ModelType', 'regression/classification',null));
+
+    :var_desc.insert((0, 'age', 'integer', 'ordinal', 0, 0, 'xxx', NULL, NULL, ''));
+    :var_desc.insert((1, 'workclass', 'string', 'nominal', 0, 0, 'xxx', NULL, NULL, ''));
+    :var_desc.insert((2, 'fnlwgt', 'number', 'continuous', 0, 1, 'xxx', NULL, NULL, ''));
+    :var_desc.insert((3, 'capital-gain', 'number', 'continuous', 0, 0, 'xxx',NULL, NULL, ''));
+    :var_desc.insert((4, 'capital-loss', 'number', 'continuous', 0, 0, 'xxx', NULL, NULL, ''));
+    :var_desc.insert((5, 'hours-per-week', 'number', 'nominal', 0, 0, 'xxx', NULL, NULL, ''));
+    :var_desc.insert((6, 'date', 'date', 'nominal', 0, 0, 'xxx', NULL, NULL, ''));
+    :var_desc.insert((7, 'class', 'integer', 'nominal', 0, 0, 'xxx', NULL, NULL, ''));
 
     :var_role.insert(('class', 'target', null, null, null));
 
@@ -82,12 +83,6 @@ DO BEGIN
 	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for fnlwgt (null:'  || :count_null  ||  ' missing:' ||  :missing_value || ')' ;
 	end if;       
    
-    select COUNT(*)               into count_null    from "DATASET_WITH_NULL"  WHERE "capital-gain" is null;
-    select "Missing Value Weight" into missing_value from :var_data where "Variable" = 'capital-gain';
-    if ( :count_null  !=  :missing_value  ) then
-	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for capital-gain (null:'  || :count_null  ||  ' missing:' ||  :missing_value || ')' ;
-	end if;    
-
     select COUNT(*)               into count_null    from "DATASET_WITH_NULL"  WHERE "capital-loss" is null;
     select "Missing Value Weight" into missing_value from :var_data where "Variable" = 'capital-loss';
     if ( :count_null  !=  :missing_value  ) then
@@ -99,5 +94,11 @@ DO BEGIN
     if ( :count_null  !=  :missing_value  ) then
 	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for date (null:' || :count_null  ||  ' missing:' ||  :missing_value || ')';
 	end if;  
+
+    select COUNT(*)               into count_null    from "DATASET_WITH_NULL"  WHERE "capital-gain" is null;
+    select "Missing Value Weight" into missing_value from :var_data where "Variable" = 'capital-gain';
+    if ( :count_null  !=  :missing_value  ) then
+	   signal ERROR set MESSAGE_TEXT = 'Wrong Missing Value for capital-gain (null:'  || :count_null  ||  ' missing:' ||  :missing_value || ')' ;
+	end if;    
 
 END;
