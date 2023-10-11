@@ -107,7 +107,7 @@ public class KxInputReader implements IKxJModelInput {
 				mMissing = 0;
 			}
 			catch( NumberFormatException e ) {
-				lValue = (float)0.0;
+				lValue = Float.NaN;
 				mMissing = 1;
 			}
 		}
@@ -128,7 +128,7 @@ public class KxInputReader implements IKxJModelInput {
 				mMissing = 0;
 			}
 			catch( NumberFormatException e ) {
-				lValue = 0.0;
+				lValue = Double.NaN;
 				mMissing = 1;
 			}
 		}

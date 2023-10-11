@@ -109,13 +109,26 @@ int main( int argc, char ** argv )
 		KxSTL::vector<KxSTL::string> lInputNames = lModel.getModelInputVariables();
 
 		SampleMappedCase lInCase 	=  SampleMappedCase(lInputNames);
-		SampleMappedCase lOutCase =
-			SampleMappedCase(lModel.getModelOutputVariables());
+		const std::vector<std::string> &lOutputVariables = lModel.getModelOutputVariables();
+		SampleMappedCase lOutCase = SampleMappedCase(lOutputVariables);
 
 		KxSTL::string lSTLLine;
 		KxSTL::vector<KxSTL::string> lColumnName;
 
-		i=0;
+		// Print output headers
+		if (lOutFile)
+		{
+			// Add the index column first
+			fprintf(lOutFile, "KxIndex");
+			// And add output variables
+			for (std::string lOutputVariable: lOutputVariables)
+			{
+				fprintf(lOutFile, ",%s", lOutputVariable.c_str());
+			}
+			fprintf(lOutFile, "\n");
+		}
+
+		i=1; // KxIndex is 1-based
 		while (KxGetStringSTL(lInFile, lSTLLine))
 		{
 			KxSTL::vector<KxSTL::string> lFieldName;

@@ -17,6 +17,17 @@ import java.text.SimpleDateFormat;
 import java.text.ParseException;
 
 public class DateUtils {
+
+	static short days_in_month[][] = {
+		{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+		{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+	};
+	// -- cumulative
+	static short nb_days_before_month[][] = {
+		{0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
+		{0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}
+	 };
+	  
 	/**
 	 * ISO T Format getter
 	 * @return the ISO format with a T separator
@@ -116,46 +127,11 @@ public class DateUtils {
 	public static int getDayOfYear(Date iDate) {
 		Calendar lCalendar = Calendar.getInstance();
 		lCalendar.setTime(iDate);
-		int lAdjust = 0;
-		if (isLeapYear(lCalendar.get(Calendar.YEAR))) {
-			lAdjust = 1;
-		}
+		
+		boolean lIsLeap = isLeapYear(lCalendar.get(Calendar.YEAR));
 		int lDay =  lCalendar.get(Calendar.DAY_OF_MONTH);
-
-		if (lCalendar.get(Calendar.MONTH) == Calendar.FEBRUARY) {
-			lDay = lDay + lAdjust + 31;
-		}
-		else if (lCalendar.get(Calendar.MONTH) == Calendar.MARCH) {
-			lDay = lDay + lAdjust + 59;
-		}
-		else if (lCalendar.get(Calendar.MONTH) == Calendar.APRIL) {
-			lDay = lDay + lAdjust + 90;
-		}
- 		else if (lCalendar.get(Calendar.MONTH) == Calendar.MAY) {
-			lDay = lDay + lAdjust + 120;
-		}
-		else if (lCalendar.get(Calendar.MONTH) == Calendar.JUNE) {
-			lDay = lDay + lAdjust + 151;
-		}
-		else if (lCalendar.get(Calendar.MONTH) == Calendar.JULY) {
-			lDay = lDay + lAdjust + 181;
-		}
-		else if (lCalendar.get(Calendar.MONTH) == Calendar.AUGUST) {
-			lDay = lDay + lAdjust + 212;
-		}
-		else if (lCalendar.get(Calendar.MONTH) == Calendar.SEPTEMBER) {
-			lDay = lDay + lAdjust + 243;
-		}
-		else if (lCalendar.get(Calendar.MONTH) == Calendar.OCTOBER) {
-			lDay = lDay + lAdjust + 273;
-		}
-		else if (lCalendar.get(Calendar.MONTH) == Calendar.NOVEMBER) {
-			lDay = lDay + lAdjust + 304;
-		}
-		else if (lCalendar.get(Calendar.MONTH) == Calendar.DECEMBER) {
-			lDay = lDay + lAdjust + 334;
-		}
-		return lDay;
+		
+		return (lDay + nb_days_before_month[lIsLeap ? 1 : 0][lCalendar.get(Calendar.MONTH)]);
 	}
 
 	public static boolean hasFiveWeeks(Date iDate) {

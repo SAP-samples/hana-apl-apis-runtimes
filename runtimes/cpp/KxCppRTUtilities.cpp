@@ -9,6 +9,7 @@
 // ----------------------------------------------------------------------------
 
 #include "KxCppRTUtilities.h"
+#include <limits>
 
 void KxStringTrim (const char* iWord, size_t iLeft, size_t iLength, const char* iSeparators,
                    size_t* oLeft, size_t* oLength)
@@ -131,4 +132,16 @@ int KxGetStringSTL (FILE* iFile, KxSTL::string& oString)
             }
         }
     }
+}
+
+double KxConvertToDouble(const char* iValue, bool& oMissing)
+{
+    char* pEnd;
+    double value = std::strtod(iValue, &pEnd);
+    if (pEnd == iValue)
+    {
+        oMissing = true;
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+    return value;
 }

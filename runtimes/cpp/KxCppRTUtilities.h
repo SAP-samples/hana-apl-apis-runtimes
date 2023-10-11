@@ -18,7 +18,7 @@
 #define KX_LINESIZE 2048
 #endif
 #ifndef KX_FIELDSEPARATOR
-#define KX_FIELDSEPARATOR ","
+#define KX_FIELDSEPARATOR ",;\t"
 #endif
 #ifndef KX_TRIMEDCHAR
 #define KX_TRIMEDCHAR " \t"
@@ -44,5 +44,7 @@ long KX_CPP_API KxStringSplitNoDupSTL(cStringVector	&oWords,
 						   const char* iTrimedChars);
 
 int KX_CPP_API KxGetStringSTL( FILE* iFile, cString& oString);
+
+double KX_CPP_API KxConvertToDouble(const char* iValue, bool& oMissing);
 
 #endif
