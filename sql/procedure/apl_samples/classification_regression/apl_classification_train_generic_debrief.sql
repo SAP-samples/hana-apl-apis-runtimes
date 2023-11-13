@@ -18,6 +18,7 @@ DO BEGIN
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '8'));
     :header.insert(('ModelFormat', 'bin'));
+    :header.insert(('CheckOperationConfig', 'true'));
 
     :config.insert(('APL/ModelType', 'regression/classification',null));
     :config.insert(('APL/VariableAutoSelection', 'true',null));
@@ -43,6 +44,9 @@ DO BEGIN
 
     -- Dump Report
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesExclusion"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesSelectionDetails"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesSelectionSummary"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesSelectionPerformance"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesCorrelation"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesContribution"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_Performance"(:out_debrief_property, :out_debrief_metric);

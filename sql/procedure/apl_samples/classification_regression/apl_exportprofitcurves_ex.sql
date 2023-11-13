@@ -19,9 +19,6 @@ insert into USER_APL.FUNC_HEADER values ('Oid', '#69');
 
 drop table USER_APL.EXPORTCURVE_CONFIG;
 create table USER_APL.EXPORTCURVE_CONFIG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";
-insert into USER_APL.EXPORTCURVE_CONFIG values ('APL/ModelName', 'Train Model',null);
-insert into USER_APL.EXPORTCURVE_CONFIG values ('APL/ModelComment', 'Published from APL',null);
-insert into USER_APL.EXPORTCURVE_CONFIG values ('APL/ModelSpaceName', '"MODELS"',null);
 
 DO BEGIN     
     header   = select * from FUNC_HEADER;       

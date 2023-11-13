@@ -18,13 +18,16 @@ DO BEGIN
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '8'));
     :header.insert(('ModelFormat', 'bin'));
+    :header.insert(('CheckOperationConfig', 'true'));
    
     :config.insert(('APL/ModelType', 'regression',null));
     :config.insert(('APL/MaxIterations', '200',null));
     :config.insert(('APL/MaxDepth', '4',null));
     :config.insert(('APL/EarlyStoppingPatience', '20',null));
     :config.insert(('APL/EvalMetric', 'RMSE',null));
-    :config.insert(('APL/Interactions', 'true',null)); 
+    :config.insert(('APL/Interactions', 'true',null));
+    
+    :config.insert(('APL/VariableAutoSelection', 'true',null));
 
     :var_role.insert(('age', 'target', null, null, null));
 
@@ -44,6 +47,9 @@ DO BEGIN
 
     -- Dump Report
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesExclusion"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesSelectionDetails"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesSelectionSummary"(:out_debrief_property, :out_debrief_metric);
+    select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesSelectionPerformance"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesCorrelation"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_VariablesContribution"(:out_debrief_property, :out_debrief_metric);
     select  * from "SAP_PA_APL"."sap.pa.apl.debrief.report::ClassificationRegression_Performance"(:out_debrief_property, :out_debrief_metric);

@@ -52,6 +52,7 @@ DO BEGIN
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '8'));
     :header.insert(('ModelFormat', 'bin'));
+    :header.insert(('CheckOperationConfig', 'true'));
     :header.insert(('MaxTasks', '2'));
 
     :config.insert(('APL/ModelType', 'timeseries',null));

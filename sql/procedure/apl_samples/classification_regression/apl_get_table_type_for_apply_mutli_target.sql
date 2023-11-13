@@ -25,6 +25,7 @@ DO BEGIN
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '8'));
     :header.insert(('ModelFormat', 'bin'));
+    :header.insert(('CheckOperationConfig', 'true'));
           
     :config.insert(('APL/ModelType', 'regression/classification',null));
         

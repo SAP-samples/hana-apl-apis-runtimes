@@ -16,6 +16,7 @@ drop table FUNC_HEADER;
 create table FUNC_HEADER like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
 insert into FUNC_HEADER values ('Oid', '#42');
 insert into FUNC_HEADER values ('LogLevel', '8');
+insert into FUNC_HEADER values ('CheckOperationConfig', 'true');
 
 drop table OPERATION_CONFIG;
 create table OPERATION_CONFIG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";

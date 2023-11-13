@@ -48,11 +48,11 @@ drop table FUNC_HEADER;
 create COLUMN table FUNC_HEADER like FUNCTION_HEADER_T;
 insert into FUNC_HEADER values ('Oid', 'foobar');
 insert into FUNC_HEADER values ('LogLevel', '8');
+insert into FUNC_HEADER values ('CheckOperationConfig', 'true');
 insert into FUNC_HEADER values ('ModelFormat', 'bin');
 
 drop table STAT_CONFIG;
 create table STAT_CONFIG like OPERATION_CONFIG_T;
-insert into STAT_CONFIG values ('APL/ModelType', 'statbuilder');
 insert into STAT_CONFIG values ('APL/VariableEstimatorOf', 'rr_class;class');
 insert into STAT_CONFIG values ('APL/CurveType','detected');
 

@@ -21,6 +21,7 @@ DO BEGIN
     
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '8'));   
+    :header.insert(('CheckOperationConfig', 'true'));
     
     -- get indicator for a model
     :config.insert(('APL/IndicatorDataset', 'Validation',null)); -- Ask to export Indicator from  dataset 'Validation'   

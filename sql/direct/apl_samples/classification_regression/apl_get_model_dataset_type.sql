@@ -29,6 +29,7 @@ drop table FUNC_HEADER;
 create table FUNC_HEADER like FUNCTION_HEADER_T;
 insert into FUNC_HEADER values ('Oid', '#42');
 insert into FUNC_HEADER values ('LogLevel', '8');
+insert into FUNC_HEADER values ('CheckOperationConfig', 'true');
 
 drop table OPERATION_CONFIG;
 create table OPERATION_CONFIG like OPERATION_CONFIG_T;

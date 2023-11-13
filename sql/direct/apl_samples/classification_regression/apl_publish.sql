@@ -32,6 +32,7 @@ call SYS.AFLLANG_WRAPPER_PROCEDURE_CREATE('APL_AREA','PUBLISH_MODEL','USER_APL',
 drop table FUNC_HEADER;
 create table FUNC_HEADER like FUNCTION_HEADER_T;
 insert into FUNC_HEADER values ('Oid', '#42');
+insert into FUNC_HEADER values ('CheckOperationConfig', 'true');
 
 drop table PUBLISH_CONFIG;
 create table PUBLISH_CONFIG like OPERATION_CONFIG_T;

@@ -1,5 +1,5 @@
--- @required(hanaMinimumVersion,2.0.30)
--- @required(hanaMaximumVersion,2.0.39)
+-- @required(hanaMinimumVersion,2.0.72)
+-- @required(hanaMaximumVersion,2.0.99)
 -- ================================================================
 -- APL_AREA, CREATE_MODEL_AND_TRAIN, using a binary format for the model
 -- This script creates a model, guesses its description and trains it
@@ -36,6 +36,7 @@ drop table FUNC_HEADER;
 create table FUNC_HEADER like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
 insert into FUNC_HEADER values ('Oid', '#42');
 insert into FUNC_HEADER values ('LogLevel', '8');
+insert into FUNC_HEADER values ('CheckOperationConfig', 'true');
 insert into FUNC_HEADER values ('ModelFormat', 'bin');
 
 drop table CREATE_AND_TRAIN_CONFIG;

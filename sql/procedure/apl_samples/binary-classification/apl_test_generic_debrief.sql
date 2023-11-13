@@ -20,6 +20,7 @@ DO BEGIN
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '8'));
     :header.insert(('ModelFormat', 'bin'));
+    :header.insert(('CheckOperationConfig', 'true'));
 
     :config.insert(('APL/ModelType', 'binary classification',null));
     :config.insert(('APL/MaxIterations', '100',null)); -- default value: 1000

@@ -56,20 +56,24 @@ DO BEGIN
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '2'));
     :header.insert(('ModelFormat', 'bin'));
+    :header.insert(('CheckOperationConfig', 'true'));
     :header.insert(('MaxTasks', '2'));  -- define nb parallel tasks to use for train
 
     :config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define the column used as the segmentation colum
     :config.insert(('APL/ModelType', 'timeseries',null));
-    :config.insert(('APL/Horizon', '20',null));
+    :config.insert(('APL/Horizon','24',null));
     :config.insert(('APL/TimePointColumnName', 'Date',null));
     :config.insert(('APL/LastTrainingTimePoint', '2001-12-29 00:00:00',null));
-    :config.insert(('APL/ForcePositiveForecast', 'true',null));
-    :config.insert(('APL/WithExtraPredictable', 'true',null));
+    :config.insert(('APL/ActivateExplanations', 'true',null));
+    :config.insert(('APL/DecomposeInfluencers', 'true',null));
 
-    :var_role.insert(('Date', 'input',null,null,'Daily Xtra'));
-    :var_role.insert(('Cash', 'target',null,null,'Daily Xtra'));
+    :var_role.insert(('Date', 'input', null, null, null));
+    :var_role.insert(('Cash', 'target', null, null, null));
 
-    insert into :var_desc  select *, '#42' from APL_SAMPLES.CASHFLOWS_DESC;
+    :var_desc.insert((0,'Date','datetime','continuous',1,1,null,null,'Unique Id',null));
+    :var_desc.insert((1,'Cash','number','continuous',0,0,null,null,null,null));
+    :var_desc.insert((2,'MondayMonthInd','integer','ordinal',0,0,null,null,null,null));
+    :var_desc.insert((3,'FridayMonthInd','integer','ordinal',0,0,null,null,null,null));
 
     "SAP_PA_APL"."sap.pa.apl.base::CREATE_MODEL_AND_TRAIN_DEBRIEF"(:header, :config, :var_desc,:var_role, 'USER_APL','CASHFLOWS_SORTED',out_model,out_log,out_sum,out_debrief_metric,out_debrief_property);
 

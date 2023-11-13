@@ -20,7 +20,7 @@ create table APPLY_SUMMARY like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.SUMMARY";
 
 DO BEGIN
     declare header  "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
-    declare config  "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";
+    declare apply_config  "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";
     declare model   "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
     declare out_log "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
     declare out_sum "SAP_PA_APL"."sap.pa.apl.base::BASE.T.SUMMARY";
@@ -30,12 +30,13 @@ DO BEGIN
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '8'));
     :header.insert(('ModelFormat', 'bin'));
+    :header.insert(('CheckOperationConfig', 'true'));
     :header.insert(('MaxTasks', '2'));  -- define nb parallel tasks to use for train
 
-    :config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define the column used as the segmentation colum
-    :config.insert(('APL/ApplyLastTimePoint', '2001-12-29 00:00:00',null));
+    :apply_config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define the column used as the segmentation colum
+    :apply_config.insert(('APL/ApplyLastTimePoint', '2001-12-29 00:00:00',null));
 
-    call "apl_apply_example_2"(:header, :model,  :config, 'USER_APL','CASHFLOWS_SORTED', 'USER_APL','APPLY_OUT',out_log,out_sum);
+    call "apl_apply_example_2"(:header, :model,  :apply_config, 'USER_APL','CASHFLOWS_SORTED', 'USER_APL','APPLY_OUT',out_log,out_sum);
 
     insert into  APPLY_OPERATION_LOG    select * from :out_log;
     insert into  APPLY_SUMMARY          select * from :out_sum;

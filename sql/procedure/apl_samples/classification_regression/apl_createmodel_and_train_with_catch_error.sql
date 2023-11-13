@@ -15,6 +15,7 @@ drop table FUNC_HEADER;
 create table FUNC_HEADER like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
 insert into FUNC_HEADER values ('Oid', '#42');
 insert into FUNC_HEADER values ('LogLevel', '8');
+insert into FUNC_HEADER values ('CheckOperationConfig', 'true');
 insert into FUNC_HEADER values ('ModelFormat', 'bin');
 
 drop table CREATE_AND_TRAIN_CONFIG;
@@ -51,7 +52,8 @@ DO BEGIN
     -- Active function progress ( ProgressLog=async and Cancelable=true )
     :header.insert(('ProgressLog','async'));
     :header.insert(('Cancelable','true'));
-   
+    :header.insert(('CheckOperationConfig', 'true'));
+	
     BEGIN
 	    -- Catch Error throw by apl and get error message from function progress table 
 	    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN

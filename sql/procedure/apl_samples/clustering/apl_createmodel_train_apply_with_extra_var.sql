@@ -43,7 +43,8 @@ DO BEGIN
    :header.insert(('Oid', '#42'));
    :header.insert(('LogLevel', '8'));
    :header.insert(('ModelFormat', 'bin'));
-   
+   :header.insert(('CheckOperationConfig', 'true'));
+
    :config.insert (('APL/ModelType', 'clustering',null));
    :config.insert (('APL/CalculateSQLExpressions', 'false',null));
    :config.insert (('APL/NbClustersMin', '4',null));

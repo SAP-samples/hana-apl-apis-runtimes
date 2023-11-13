@@ -14,6 +14,8 @@ DO BEGIN
     model_in         = select * from MODEL_TRAIN_BIN;
 
     :header.insert(('Oid', '#42'));
+    :header.insert(('CheckOperationConfig', 'true'));
+
     :config_update.insert(('APL/ModelName', 'XXX-NEW-MODEL-NAME',null));
 
     "SAP_PA_APL"."sap.pa.apl.base::UPDATE_MODEL"(:header, :model_in, :config_update, :out_model);

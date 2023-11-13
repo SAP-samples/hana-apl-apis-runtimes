@@ -30,6 +30,7 @@ DO BEGIN
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '8'));
     :header.insert(('ModelFormat', 'bin'));
+    :header.insert(('CheckOperationConfig', 'true'));
 
     :config.insert(('APL/Horizon', '20',null));
     :config.insert(('APL/TimePointColumnName', 'Date',null));

@@ -30,6 +30,7 @@ BEGIN
 
    :funcheader.insert(('Oid', '#42'));
    :funcheader.insert(('LogLevel', '8'));
+   :funcheader.insert(('CheckOperationConfig', 'true'));
    :funcheader.insert(('ModelFormat', 'bin'));
    
    -- create a classification model

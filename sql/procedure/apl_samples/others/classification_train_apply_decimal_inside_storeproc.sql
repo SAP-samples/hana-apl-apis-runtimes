@@ -46,6 +46,7 @@ BEGIN
    :header.insert(('Oid', '#42'));
    :header.insert(('LogLevel', '8'));
    :header.insert(('ModelFormat', 'bin'));
+   :header.insert(('CheckOperationConfig', 'true'));
    
    -- create a classification model
    :create_config.insert (('APL/ModelType', 'regression/classification',null));

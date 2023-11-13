@@ -76,6 +76,7 @@ DO BEGIN
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '1'));
     :header.insert(('ModelFormat', 'bin'));
+    :header.insert(('CheckOperationConfig', 'true'));
     :header.insert(('MaxTasks', '2'));  -- define nb parallel tasks to use for forecast
 
     :config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define the column used as the segmentation colum

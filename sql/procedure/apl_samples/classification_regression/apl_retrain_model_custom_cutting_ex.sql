@@ -15,11 +15,11 @@ drop table FUNC_HEADER;
 create table FUNC_HEADER like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
 insert into FUNC_HEADER values ('Oid', '#42');
 insert into FUNC_HEADER values ('LogLevel', '8');
+insert into FUNC_HEADER values ('CheckOperationConfig', 'true');
 insert into FUNC_HEADER values ('ModelFormat', 'bin');
 
-drop table TRAINING_CONFIG;
-create table TRAINING_CONFIG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";
--- TODO: insert training configuration parameters (to be defined)
+drop table RETRAIN_CONFIG;
+create table RETRAIN_CONFIG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_DETAILED";
 
 drop table MODEL_RETRAINED_BIN;
 create table MODEL_RETRAINED_BIN like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
@@ -48,7 +48,7 @@ create view VALIDATION as (select * from APL_SAMPLES.ADULT01);
 DO BEGIN     
     header   = select * from FUNC_HEADER;             
 	model_in  = select * from MODEL_TRAIN_BIN; 
-	train_config   = select * from TRAINING_CONFIG;            
+	train_config   = select * from RETRAIN_CONFIG;            
     var_role = select * from VARIABLE_ROLES;  
     "SAP_PA_APL"."sap.pa.apl.base::RETRAIN_MODEL_MULTI_DATASET"(:header, :model_in, :train_config, 'USER_APL','ESTIMATION','USER_APL','VALIDATION','USER_APL','TEST', out_train_model, out_train_log, out_sum, out_indic);
 

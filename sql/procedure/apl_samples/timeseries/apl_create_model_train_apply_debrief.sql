@@ -47,14 +47,15 @@ drop table APPLY_OUT;
 
 DO BEGIN
     declare header "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
-    declare config "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";   
-    declare apply_config "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";   
-    declare var_desc "SAP_PA_APL"."sap.pa.apl.base::BASE.T.VARIABLE_DESC_OID";      
-    declare var_role "SAP_PA_APL"."sap.pa.apl.base::BASE.T.VARIABLE_ROLES_WITH_COMPOSITES_OID";      
+    declare config "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED"; 
+    declare apply_config "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";
+    declare var_desc "SAP_PA_APL"."sap.pa.apl.base::BASE.T.VARIABLE_DESC_OID";
+    declare var_role "SAP_PA_APL"."sap.pa.apl.base::BASE.T.VARIABLE_ROLES_WITH_COMPOSITES_OID";
      
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '8'));
     :header.insert(('ModelFormat', 'bin'));
+    :header.insert(('CheckOperationConfig', 'true'));
 
     :config.insert(('APL/ModelType', 'timeseries',null));
     :config.insert(('APL/Horizon', '20',null));
@@ -70,7 +71,7 @@ DO BEGIN
 
     "SAP_PA_APL"."sap.pa.apl.base::CREATE_MODEL_AND_TRAIN"(:header, :config, :var_desc,:var_role, 'USER_APL','CASHFLOWS_SORTED', model,  train_log, train_sum, train_indic);          
 
-    call "apl_apply_debrief_example"(:header, :model,  :config, 'USER_APL','CASHFLOWS_SORTED', 'USER_APL','APPLY_OUT',out_apply_log,out_apply_sum,out_debrief_metric, out_debrief_property);
+    call "apl_apply_debrief_example"(:header, :model,  :apply_config, 'USER_APL','CASHFLOWS_SORTED', 'USER_APL','APPLY_OUT',out_apply_log,out_apply_sum,out_debrief_metric, out_debrief_property);
 
     -- store result into table
     insert into  "USER_APL"."MODEL_BIN_OUT"   select * from :model;

@@ -26,24 +26,28 @@ create table APPLY_DEBRIEF_PROPERTY like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.D
 
 DO BEGIN
     declare header  "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
-    declare config  "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";
+    declare apply_config "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";
     declare model   "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
     declare out_log "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
     declare out_sum "SAP_PA_APL"."sap.pa.apl.base::BASE.T.SUMMARY";
-    declare out_debrief_metric   "SAP_PA_APL"."sap.pa.apl.base::BASE.T.DEBRIEF_METRIC_OID";      
-    declare out_debrief_property "SAP_PA_APL"."sap.pa.apl.base::BASE.T.DEBRIEF_PROPERTY_OID";      
+    declare out_debrief_metric   "SAP_PA_APL"."sap.pa.apl.base::BASE.T.DEBRIEF_METRIC_OID";
+    declare out_debrief_property "SAP_PA_APL"."sap.pa.apl.base::BASE.T.DEBRIEF_PROPERTY_OID";
    
     insert into :model select * from MODEL_TRAIN_BIN;
 
     :header.insert(('Oid', '#42'));
     :header.insert(('LogLevel', '8'));
     :header.insert(('ModelFormat', 'bin'));
+    :header.insert(('CheckOperationConfig', 'true'));
     :header.insert(('MaxTasks', '2'));  -- define nb parallel tasks to use for train
 
-    :config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define the column used as the segmentation colum
-    :config.insert(('APL/ApplyLastTimePoint', '2001-12-29 00:00:00',null));
+    :apply_config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define the column used as the segmentation colum
+    :apply_config.insert(('APL/ApplyLastTimePoint', '2001-12-29 00:00:00',null));
+    :apply_config.insert(('APL/AppliedHorizon', '14',null));
+    :apply_config.insert(('APL/LocalExplanations/Activate', 'true',null));
+    :apply_config.insert(('APL/ApplyExtraMode', 'First Forecast with Stable Components and Residues and Error Bars',null));
 
-    call "apl_apply_debrief_example"(:header, :model,  :config, 'USER_APL','CASHFLOWS_SORTED', 'USER_APL','APPLY_OUT',out_log,out_sum,out_debrief_metric, out_debrief_property);
+    call "apl_apply_debrief_example"(:header, :model,  :apply_config, 'USER_APL','CASHFLOWS_SORTED', 'USER_APL','APPLY_OUT',out_log,out_sum,out_debrief_metric, out_debrief_property);
 
     insert into  APPLY_OPERATION_LOG    select * from :out_log;
     insert into  APPLY_SUMMARY          select * from :out_sum;
@@ -65,3 +69,5 @@ select * from APPLY_SUMMARY where "KEY" = 'AplTotalElapsedTime';
 
 -- Get models in error
 select * from APPLY_OPERATION_LOG where "LEVEL" = 0;
+
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::TimeSeries_ForecastBreakdown"(APPLY_DEBRIEF_PROPERTY, APPLY_DEBRIEF_METRIC);
