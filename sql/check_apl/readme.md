@@ -1,6 +1,6 @@
 # How to check APL installation
 ## Purpose
-This script validate APL is properly installed by:
+The script [check_apl.sql](./check_apl.sql) validate APL is properly installed by:
 1. checking basic prerequisites
     * APL plugin is actually installed (!)
     * Script Server is activated
@@ -25,7 +25,7 @@ It analyzes APL artifacts delivered via a Delivery Unit as well as new Hana Clou
 This is a pure SQLScript, meaning it can be run on server side as well as client side (even Windows) as soon as the HANA client *hdbsql* is available
 
 ## Assumptions and prerequisites
-* **The command line tool _hdbsql_ can be used to connect to HANA**
+* The command line tool **_hdbsql_** **MUST** be used to connect to HANA
 * The password of HANA's SYSTEM User is known
 * A temporary user CHECK_APL will be (re)-created and dropped after execution. This user is reserved and must not be used to keep any important artefact.
 * Concurrent executions of this script are not supported.
@@ -54,7 +54,7 @@ HANA_SYSTEM_PASSWORD=Manager1; CHECK_APL_PASSWORD=Password1 ;hdbsql -n hana:3001
  ```
 
 ## if you cannot have access to SYSTEM user or hdbsql tool cannot be used
-It means the user checking APL will be created by a dbadmin user. Dbadmin user will also be responsible of final cleanup.
+It means the user checking APL must be created, as a first step, by a dbadmin user. Dbadmin user will also be responsible of final cleanup.
 In such a case, the process become:
 
 * Ask dbadmin to create user CHECK_APL with this setup:
@@ -91,7 +91,7 @@ GRANT AFLPM_CREATOR_ERASER_EXECUTE TO CHECK_APL;
 GRANT "sap.pa.apl.base.roles::APL_EXECUTE" TO CHECK_APL;
 ```
 
-* Use your favorite SQL tool (HANA studio or HANA ide) to run the SQL script [check_apl_without_creating_check_apl_user.sql](./check_apl_without_creating_check_apl_user.sql)
+* Use your favorite SQL tool (HANA studio or HANA web ide) to run the SQL script [check_apl_without_creating_check_apl_user.sql](./check_apl_without_creating_check_apl_user.sql)
 * Ask dbadmin to cleanup the user CHECK_APL
 ```SQL
 DROP USER CHECK_APL CASCADE;

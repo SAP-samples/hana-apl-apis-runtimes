@@ -61,7 +61,6 @@ long KxStringSplitNoDupSTL (KxSTL::vector<KxSTL::string>& oWords, KxSTL::string 
                             const char* iSeparators, const char* iTrimedChars)
 {
     long lResult = 0;
-    size_t lNextWord = 0;
     size_t lLeftBefore = 0;
     size_t lTokenLength;
     size_t lFirst;
@@ -95,7 +94,7 @@ long KxStringSplitNoDupSTL (KxSTL::vector<KxSTL::string>& oWords, KxSTL::string 
             lResult = KxStringTokenSTL (iLine.c_str (), lLeftBefore, iSeparators, &lTokenLength);
         }
     }
-    return lNextWord;
+    return lResult;
 }
 
 int KxGetStringSTL (FILE* iFile, KxSTL::string& oString)
@@ -128,7 +127,7 @@ int KxGetStringSTL (FILE* iFile, KxSTL::string& oString)
             }
             else
             {
-                oString += ch; /*  Else add char to string  */
+                oString += static_cast<char>(ch); /*  Else add char to string  */
             }
         }
     }
