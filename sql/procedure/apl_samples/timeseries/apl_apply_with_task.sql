@@ -64,6 +64,8 @@ DO BEGIN
 
     :var_role.insert(('Date', 'input',null,null,null));
     :var_role.insert(('Cash', 'target',null,null,null));
+    
+    :apply_config.insert(('APL/ApplyLastTimePoint', '2001-12-29 00:00:00',null));
 
     insert into :var_desc select *,'42' from APL_SAMPLES.CASHFLOWS_DESC;    
           

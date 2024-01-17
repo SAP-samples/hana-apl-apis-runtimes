@@ -163,104 +163,117 @@ KxCppRTValue::getValue() const
 KxSTL::string
 KxCppRTValue::getDayOfWeek() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", getDOW(mDate->mYear, mDate->mMonth, mDate->mDay));
+    const int lBuffersize = 2;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", getDOW(mDate->mYear, mDate->mMonth, mDate->mDay));
 	return KxSTL::string(lValue);
 }
 
 KxSTL::string
 KxCppRTValue::getDayOfMonth() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", mDate->mDay);
+    const int lBuffersize = 3;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", mDate->mDay);
 	return KxSTL::string(lValue);
 }
 
 KxSTL::string
 KxCppRTValue::getDayOfYear() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", getDOY(mDate->mYear, mDate->mMonth, mDate->mDay));
+    const int lBuffersize = 4;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", getDOY(mDate->mYear, mDate->mMonth, mDate->mDay));
 	return KxSTL::string(lValue);
 }
 
 KxSTL::string
 KxCppRTValue::getWeekOfMonth() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", getWOM(mDate->mYear, mDate->mMonth, mDate->mDay));
+    const int lBuffersize = 2;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", getWOM(mDate->mYear, mDate->mMonth, mDate->mDay));
 	return KxSTL::string(lValue);
 }
 
 KxSTL::string
 KxCppRTValue::getWeekOfYear() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", getWOY(mDate->mYear, mDate->mMonth, mDate->mDay));
+    const int lBuffersize = 3;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", getWOY(mDate->mYear, mDate->mMonth, mDate->mDay));
 	return KxSTL::string(lValue);
 }
 
 KxSTL::string
 KxCppRTValue::getMonthOfQuarter() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", getMOQ(mDate->mMonth));
+    const int lBuffersize = 2;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", getMOQ(mDate->mMonth));
 	return KxSTL::string(lValue);
 }
 
 KxSTL::string
 KxCppRTValue::getMonthOfYear() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", mDate->mMonth);
+    const int lBuffersize = 3;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", mDate->mMonth);
 	return KxSTL::string(lValue);
 }
 
 KxSTL::string
 KxCppRTValue::getYear() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", mDate->mYear);
+    const int lBuffersize = 5;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", mDate->mYear);
 	return KxSTL::string(lValue);
 }
 
 KxSTL::string
 KxCppRTValue::getQuarter() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", getQOY(mDate->mMonth));
+    const int lBuffersize = 2;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", getQOY(mDate->mMonth));
 	return KxSTL::string(lValue);
 }
 
 KxSTL::string
 KxCppRTValue::getHour() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", mDate->mHour);
+    const int lBuffersize = 3;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", mDate->mHour);
 	return KxSTL::string(lValue);
 }
 
 KxSTL::string
 KxCppRTValue::getMinute() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", mDate->mMinute);
+    const int lBuffersize = 3;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", mDate->mMinute);
 	return KxSTL::string(lValue);
 }
 
 KxSTL::string
 KxCppRTValue::getSecond() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", mDate->mSecond);
+    const int lBuffersize = 3;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", mDate->mSecond);
 	return KxSTL::string(lValue);
 }
 
 KxSTL::string
 KxCppRTValue::getMicroSecond() const
 {
-	char lValue[sizeof(int) + 1];
-	sprintf(lValue, "%d", mDate->mMuSecond);
+    const int lBuffersize = 3;
+	char lValue[lBuffersize];
+	snprintf(lValue, lBuffersize, "%d", mDate->mMuSecond);
 	return KxSTL::string(lValue);
 }
 
