@@ -11,7 +11,8 @@
 -- --------------------------------------------------------------------------
 
 connect USER_APL password Password1;
-SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+-- Uncomment to modify the cache location to schema APL_CACHE 
+-- SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 -- KxNodes1  
 drop type MODEL_RECO_NODES1_T;
@@ -69,14 +70,14 @@ insert into APPLY_CONFIG values ('APL/SkipAlreadyOwned', 'true',null);       -- 
 
 
 drop table USER_APPLYIN;
-create column table USER_APPLYIN like USER_T;
+create table USER_APPLYIN like USER_T;
 insert into USER_APPLYIN values ('23');
 
 drop table USER_APPLYOUT;
-create column table USER_APPLYOUT like RECO_SCORE_T;
+create table USER_APPLYOUT like RECO_SCORE_T;
 
 drop table APPLY_LOG;
-create column table APPLY_LOG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
+create table APPLY_LOG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
 
 -- --------------------------------------------------------------------------
 -- Execute the APL function using its AFL wrapper and the actual input/output tables

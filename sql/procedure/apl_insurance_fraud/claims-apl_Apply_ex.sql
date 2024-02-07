@@ -4,7 +4,8 @@
   @depend(claims-apl_Create_Train_ex.sql)
 */
 connect USER_APL password Password1;
-SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+-- Uncomment to modify the cache location to schema APL_CACHE 
+-- SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 -- Create the table in which we will put the prediction scores
 drop type CLAIMS_SCORES_T_OUT;
@@ -29,10 +30,10 @@ insert into APPLY_CONFIG values ('APL/ApplyExtraMode','Decision',null);
 
 -- Create the output tables
 drop table CLAIMS_SCORES;
-create column table CLAIMS_SCORES like CLAIMS_SCORES_T_OUT;
+create table CLAIMS_SCORES like CLAIMS_SCORES_T_OUT;
 
 drop table APPLY_LOG;
-create column table APPLY_LOG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
+create table APPLY_LOG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
 
 -- Run the APL function and display the individual scores
 DO BEGIN     

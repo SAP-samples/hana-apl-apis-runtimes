@@ -42,7 +42,7 @@ create type ADULT01_T_OUT as table (
 -- Create AFL wrappers for the APL function
 -- --------------------------------------------------------------------------
 drop table CALL_SIGNATURE;
-create column table CALL_SIGNATURE like PROCEDURE_SIGNATURE_T;
+create table CALL_SIGNATURE like PROCEDURE_SIGNATURE_T;
 
 insert into CALL_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T', 'IN');
 insert into CALL_SIGNATURE values (2, 'USER_APL','OPERATION_CONFIG_T', 'IN');
@@ -128,10 +128,10 @@ create table APPLY_CONFIG like OPERATION_CONFIG_T;
 -- TODO: insert training configuration parameters (to be defined)
 
 drop table ADULT01_APPLY;
-create column table ADULT01_APPLY like ADULT01_T_OUT;
+create table ADULT01_APPLY like ADULT01_T_OUT;
 
 drop table APPLY_LOG;
-create column table APPLY_LOG like OPERATION_LOG_T;
+create table APPLY_LOG like OPERATION_LOG_T;
 
 
 --- Create Model StatBuilder -------------------------------------

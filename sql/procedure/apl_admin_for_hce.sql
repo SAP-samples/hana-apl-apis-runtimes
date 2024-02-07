@@ -44,16 +44,17 @@ grant select on SCHEMA "APL_SAMPLES" to USER_APL;
 -- The location of this HCO_PA_APL cache is based on a database schema. 
 -- The default schema for this cache is SAP_PA_APL.
 -- This schema can be customized, by setting a session variable APL_CACHE_SCHEMA.
--- Here, we're going to use a common "APL_CACHE" schema for the HCO_PA_APL cache, and the appropriate privilege needs to be set for the USER_APL user.
-drop SCHEMA "APL_CACHE";
-create SCHEMA "APL_CACHE";
-grant create any on SCHEMA "APL_CACHE" to USER_APL;
+-- Uncomment these 3 lines to use a common "APL_CACHE" schema for the HCO_PA_APL cache, with the appropriate privilege needed to be set for the USER_APL user.
+-- drop SCHEMA "APL_CACHE";
+-- create SCHEMA "APL_CACHE";
+-- grant create any on SCHEMA "APL_CACHE" to USER_APL;
 
 -- Granting this role allows running APL functions and running the HCO_PA_APL Stored Procedures with the default schema as a cache
 grant "sap.pa.apl.base.roles::APL_EXECUTE" to USER_APL;
 
 -- Set the custom cache for the HCO_PA_APL Stored Procedures
 connect USER_APL password Password1;
+-- -- Uncomment to modify the cache location to schema APL_CACHE 
 SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 -- Check granted role with USER_APL

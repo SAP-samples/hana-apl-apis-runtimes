@@ -13,7 +13,7 @@ connect USER_APL password Password1;
 -- --------------------------------------------------------------------------
 
 drop table UPDATE_MODEL_SIGNATURE;
-create column table UPDATE_MODEL_SIGNATURE like PROCEDURE_SIGNATURE_T;
+create table UPDATE_MODEL_SIGNATURE like PROCEDURE_SIGNATURE_T;
 
 insert into UPDATE_MODEL_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T', 'IN');
 insert into UPDATE_MODEL_SIGNATURE values (2, 'USER_APL','MODEL_NATIVE_T', 'IN');

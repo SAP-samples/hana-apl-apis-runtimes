@@ -58,7 +58,7 @@ create type FORECAST_OUT_T as table (
 -- --------------------------------------------------------------------------
 -- the AFL wrapper generator needs the signature of the expected stored proc
 drop table FORECAST_SIGNATURE;
-create column table FORECAST_SIGNATURE like PROCEDURE_SIGNATURE_T;
+create table FORECAST_SIGNATURE like PROCEDURE_SIGNATURE_T;
 
 insert into FORECAST_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T', 'IN');
 insert into FORECAST_SIGNATURE values (2, 'USER_APL','OPERATION_CONFIG_T', 'IN');

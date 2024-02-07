@@ -8,7 +8,8 @@
 --  @depend(apl_createmodel_and_train_ex.sql)
 
 connect USER_APL password Password1;
-SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+-- Uncomment to modify the cache location to schema APL_CACHE 
+-- SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 
 -- --------------------------------------------------------------------------
@@ -22,7 +23,7 @@ drop table USER_APL.UPDATE_CONFIG;
 create table USER_APL.UPDATE_CONFIG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";
 
 drop table USER_APL.MODEL_UPDATED_BIN;
-create COLUMN table USER_APL.MODEL_UPDATED_BIN like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
+create table USER_APL.MODEL_UPDATED_BIN like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
 
 -- --------------------------------------------------------------------------
 -- Execute the APL function using its AFL wrapper and the actual input/output tables

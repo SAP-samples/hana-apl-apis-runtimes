@@ -5,7 +5,8 @@
 -- Assumption 1: the users & privileges have been created & granted (see apl_admin_ex.sql).
 
 connect USER_APL password Password1;
-SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+-- Uncomment to modify the cache location to schema APL_CACHE 
+-- SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 -- --------------------------------------------------------------------------
 -- Create the input/output tables used as arguments for the APL function
@@ -49,7 +50,7 @@ drop table TEST_CONFIG;
 create table TEST_CONFIG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";
 
 drop table TEST_LOG;
-create column table TEST_LOG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
+create table TEST_LOG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
 
 drop table TEST_INDICATORS;
 create table TEST_INDICATORS like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.INDICATORS";

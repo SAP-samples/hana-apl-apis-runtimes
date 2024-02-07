@@ -2,7 +2,8 @@
 -- ================================================================
 -- @depend(apl_apply_proc.sql)
 connect USER_APL password Password1;
-SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+-- Uncomment to modify the cache location to schema APL_CACHE 
+-- SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 drop table "USER_APL"."APPLY_IN";
 create TABLE "USER_APL"."APPLY_IN"  as (

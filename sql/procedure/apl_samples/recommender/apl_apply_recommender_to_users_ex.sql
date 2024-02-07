@@ -14,7 +14,7 @@ connect USER_APL password Password1;
 -- --------------------------------------------------------------------------
 
 drop table FUNC_HEADER;
-create COLUMN table FUNC_HEADER like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
+create table FUNC_HEADER like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
 insert into FUNC_HEADER values ('Oid', '#42');
 insert into FUNC_HEADER values ('CheckOperationConfig', 'true');
 
@@ -32,7 +32,7 @@ insert into RECO_CONFIG values ('APL/Item', 'ItemPurchased', NULL);             
 
 -- The user list MUST be available in a column named "UserID"
 DROP TABLE USERS_CUST;
-CREATE COLUMN TABLE USERS_CUST ("UserID" Integer);
+create table USERS_CUST ("UserID" Integer);
 INSERT INTO USERS_CUST VALUES (728);
 INSERT INTO USERS_CUST VALUES (65);
 

@@ -14,7 +14,7 @@ connect USER_APL password Password1;
 -- --------------------------------------------------------------------------
 
 drop table EXPORT_APPLY_CODE_SIGNATURE;
-create column table EXPORT_APPLY_CODE_SIGNATURE like PROCEDURE_SIGNATURE_T;
+create table EXPORT_APPLY_CODE_SIGNATURE like PROCEDURE_SIGNATURE_T;
 
 -- KxNodes1  
 drop type MODEL_RECO_NODES1_T;

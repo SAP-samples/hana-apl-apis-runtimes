@@ -9,10 +9,10 @@ create view CENSUS_SORTED as select "age", "workclass", "fnlwgt", "education", "
 -- CREATE CLASSIFICATION AND REGRESSION MODEL AND TRAIN
 -- --------------------------------------------------------------------------
 drop table CLASSREG_MODEL_BIN_OUT;
-create COLUMN table CLASSREG_MODEL_BIN_OUT like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
+create table CLASSREG_MODEL_BIN_OUT like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
 
 drop table CLASSREG_SCHEMA_OUT;
-create COLUMN table CLASSREG_SCHEMA_OUT like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.TABLE_TYPE";
+create table CLASSREG_SCHEMA_OUT like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.TABLE_TYPE";
 
 
 DO BEGIN     

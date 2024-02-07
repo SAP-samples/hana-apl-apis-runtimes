@@ -17,7 +17,7 @@ connect USER_APL password Password1;
 -- --------------------------------------------------------------------------
 -- the AFL wrapper generator needs the signature of the expected stored proc
 drop table GET_KEY_INFLUENCERS_FROM_MODEL_SIGNATURE;
-create column table GET_KEY_INFLUENCERS_FROM_MODEL_SIGNATURE like PROCEDURE_SIGNATURE_T;
+create table GET_KEY_INFLUENCERS_FROM_MODEL_SIGNATURE like PROCEDURE_SIGNATURE_T;
             
 insert into GET_KEY_INFLUENCERS_FROM_MODEL_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T', 'IN');
 insert into GET_KEY_INFLUENCERS_FROM_MODEL_SIGNATURE values (2, 'USER_APL','MODEL_BIN_OID_T', 'IN');

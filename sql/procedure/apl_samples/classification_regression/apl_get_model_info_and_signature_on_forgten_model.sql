@@ -6,7 +6,8 @@
 --  @depend(apl_createmodel_and_train_ex.sql)
 
 connect USER_APL password Password1;
-SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+-- Uncomment to modify the cache location to schema APL_CACHE 
+-- SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 -- --------------------------------------------------------------------------
 -- Create the input/output tables used as arguments for the APL function
@@ -43,7 +44,7 @@ create table USER_APL.UPDATE_CONFIG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.O
 insert into USER_APL.UPDATE_CONFIG values ('APL/ForgetTraining', 'true',null);
 
 drop table USER_APL.MODEL_FORGOTTEN_BIN;
-create COLUMN table USER_APL.MODEL_FORGOTTEN_BIN like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
+create table USER_APL.MODEL_FORGOTTEN_BIN like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
 
 drop table SUMMARY_FORGOTTEN;
 create table SUMMARY_FORGOTTEN like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.SUMMARY";

@@ -49,7 +49,7 @@ create type ADULT01_T_OUT as table (
 
 -- the AFL wrapper generator needs the signature of the expected stored proc
 drop table CALL_SIGNATURE;
-create column table CALL_SIGNATURE like PROCEDURE_SIGNATURE_T;
+create table CALL_SIGNATURE like PROCEDURE_SIGNATURE_T;
 
 -- Generate APLWRAPPER_CREATE_MODEL
 insert into CALL_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T', 'IN');
@@ -117,7 +117,7 @@ create table APPLY_CONFIG like OPERATION_CONFIG_T;
 -- TODO: insert apply configuration parameters (to be defined)
 
 drop table ADULT01_APPLY;
-create column table ADULT01_APPLY like ADULT01_T_OUT;
+create table ADULT01_APPLY like ADULT01_T_OUT;
 
 drop table TRAIN_LOG;
 create table TRAIN_LOG like OPERATION_LOG_T;

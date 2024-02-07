@@ -39,7 +39,7 @@ create type CENSUS_T as table (
 -- --------------------------------------------------------------------------
 -- the AFL wrapper generator needs the signature of the expected stored proc
 drop table SCORING_EQUATION_SIGNATURE;
-create column table SCORING_EQUATION_SIGNATURE  like PROCEDURE_SIGNATURE_T;
+create table SCORING_EQUATION_SIGNATURE  like PROCEDURE_SIGNATURE_T;
 
 insert into SCORING_EQUATION_SIGNATURE values (1,  'USER_APL','FUNCTION_HEADER_T', 'IN');
 insert into SCORING_EQUATION_SIGNATURE values (2,  'USER_APL','OPERATION_CONFIG_T', 'IN');

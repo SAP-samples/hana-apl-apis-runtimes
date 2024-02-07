@@ -11,7 +11,7 @@ connect USER_APL password Password1;
 -- --------------------------------------------------------------------------
 
 drop table FUNC_HEADER;
-create COLUMN table FUNC_HEADER like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
+create table FUNC_HEADER like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.FUNCTION_HEADER";
 insert into FUNC_HEADER values ('Oid', '#42');
 insert into FUNC_HEADER values ('CheckOperationConfig', 'true');
 

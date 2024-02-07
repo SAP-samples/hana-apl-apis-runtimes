@@ -71,11 +71,11 @@ create table APPLY_CONFIG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_C
 -- TODO: insert training configuration parameters (to be defined)
 
 drop table ADULT01_APPLY;
-create column table ADULT01_APPLY like ADULT01_T_OUT_P;
+create table ADULT01_APPLY like ADULT01_T_OUT_P;
 
 -- Add seg column into input table as parallel parametre
 drop table APPLY_IN ;
-create column table APPLY_IN like ADULT01_T_P;
+create table APPLY_IN like ADULT01_T_P;
 insert into APPLY_IN( "seg","age","workclass","fnlwgt","education","education-num","marital-status","occupation","relationship","race","sex","capital-gain","capital-loss","hours-per-week","native-country","class")  
 select  
     'seg1' as "seg", 

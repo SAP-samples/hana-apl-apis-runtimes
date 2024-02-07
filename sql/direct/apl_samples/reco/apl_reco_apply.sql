@@ -56,7 +56,7 @@ create type USER_T as table (
 -- --------------------------------------------------------------------------
 -- the AFL wrapper generator needs the signature of the expected stored proc
 drop table APPLY_MODEL_SIGNATURE;
-create column table APPLY_MODEL_SIGNATURE  like PROCEDURE_SIGNATURE_T;
+create table APPLY_MODEL_SIGNATURE  like PROCEDURE_SIGNATURE_T;
 
 insert into APPLY_MODEL_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T',  'IN');
 insert into APPLY_MODEL_SIGNATURE values (2, 'USER_APL','MODEL_NATIVE_T', 'IN');
@@ -91,14 +91,14 @@ insert into APPLY_CONFIG values ('APL/SkipAlreadyOwned', 'true');       -- optio
 
 
 drop table USER_APPLYIN;
-create column table USER_APPLYIN like USER_T;
+create table USER_APPLYIN like USER_T;
 insert into USER_APPLYIN values ('23');
 
 drop table USER_APPLYOUT;
-create column table USER_APPLYOUT like RECO_SCORE_T;
+create table USER_APPLYOUT like RECO_SCORE_T;
 
 drop table APPLY_LOG;
-create column table APPLY_LOG like OPERATION_LOG_T;
+create table APPLY_LOG like OPERATION_LOG_T;
 
 -- --------------------------------------------------------------------------
 -- Execute the APL function using its AFL wrapper and the actual input/output tables

@@ -3,7 +3,8 @@
 -- @depend(apl_createmodel_and_train_ex.sql)
 
 connect USER_APL password Password1;
-SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+-- Uncomment to modify the cache location to schema APL_CACHE 
+-- SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 DO BEGIN
 	declare ERROR condition for SQL_ERROR_CODE 10001;

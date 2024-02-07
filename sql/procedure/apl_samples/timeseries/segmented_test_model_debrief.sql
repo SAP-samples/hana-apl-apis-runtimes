@@ -8,7 +8,8 @@
 -- Assumption 2: There's a valid trained model (created by APL) in the MODEL_TRAIN_BIN table.
 --  @depend(segmented_create_train.sql)
 connect USER_APL password Password1;
-SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+-- Uncomment to modify the cache location to schema APL_CACHE 
+-- SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 drop table TEST_SUMMARY;
 create table TEST_SUMMARY like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.SUMMARY";

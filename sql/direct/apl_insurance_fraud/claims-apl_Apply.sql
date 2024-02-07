@@ -17,7 +17,7 @@ create type CLAIMS_SCORES_T_OUT as table (
 );
 -- Create the signature of the procedure
 drop table APPLY_MODEL_SIGNATURE;
-create column table APPLY_MODEL_SIGNATURE  like PROCEDURE_SIGNATURE_T;
+create table APPLY_MODEL_SIGNATURE  like PROCEDURE_SIGNATURE_T;
 
 insert into APPLY_MODEL_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T',   'IN');
 insert into APPLY_MODEL_SIGNATURE values (2, 'USER_APL','MODEL_BIN_OID_T',     'IN');
@@ -43,7 +43,7 @@ insert into APPLY_CONFIG values ('APL/ApplyExtraMode','Decision');
 
 -- Create the output tables
 drop table CLAIMS_SCORES;
-create column table CLAIMS_SCORES like CLAIMS_SCORES_T_OUT;
+create table CLAIMS_SCORES like CLAIMS_SCORES_T_OUT;
 
 -- Run the APL function and display the individual scores
 DO BEGIN     

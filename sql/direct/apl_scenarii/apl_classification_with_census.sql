@@ -79,7 +79,7 @@ create type CENSUS_T_OUT as table (
 
 -- Generate APLWRAPPER_CREATE_MODEL_AND_TRAIN
 drop table CALL_SIGNATURE;
-create column table CALL_SIGNATURE like PROCEDURE_SIGNATURE_T;
+create table CALL_SIGNATURE like PROCEDURE_SIGNATURE_T;
 insert into CALL_SIGNATURE values (1,'USER_APL','FUNCTION_HEADER_T', 'IN');
 insert into CALL_SIGNATURE values (2,'USER_APL','OPERATION_CONFIG_T', 'IN');
 insert into CALL_SIGNATURE values (3,'USER_APL','VARIABLE_DESC_T', 'IN');
@@ -143,7 +143,7 @@ drop table TABLE_TYPE;
 drop table OPERATION_LOG;
 drop table INPUT_DATA;
 
-create column table CENSUS_APPLY like CENSUS_T_OUT;
+create table CENSUS_APPLY like CENSUS_T_OUT;
 create table SUMMARY like SUMMARY_T;
 create table INDICATORS like INDICATORS_T;
 create table MODEL_TRAIN_BIN like MODEL_BIN_OID_T;

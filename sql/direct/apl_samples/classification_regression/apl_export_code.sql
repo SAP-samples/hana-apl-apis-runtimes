@@ -12,7 +12,7 @@ connect USER_APL password Password1;
 -- --------------------------------------------------------------------------
 
 drop table EXPORT_APPLY_CODE_SIGNATURE;
-create column table EXPORT_APPLY_CODE_SIGNATURE like PROCEDURE_SIGNATURE_T;
+create table EXPORT_APPLY_CODE_SIGNATURE like PROCEDURE_SIGNATURE_T;
 
 insert into EXPORT_APPLY_CODE_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T', 'IN');
 insert into EXPORT_APPLY_CODE_SIGNATURE values (2, 'USER_APL','MODEL_BIN_OID_T', 'IN');

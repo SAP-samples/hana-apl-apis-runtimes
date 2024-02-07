@@ -48,7 +48,7 @@ create type ADULT01_T_OUT as table (
 -- Create AFL wrappers for the APL function
 -- --------------------------------------------------------------------------
 drop table CALL_SIGNATURE;
-create column table CALL_SIGNATURE like PROCEDURE_SIGNATURE_T;
+create table CALL_SIGNATURE like PROCEDURE_SIGNATURE_T;
 
 -- Generate APLWRAPPER_CREATE_MODEL
 insert into CALL_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T', 'IN');
@@ -198,7 +198,7 @@ insert into EXPORT_CODE_CONFIG_4 values ('APL/ApplyExtraMode', 'No Extra');
 insert into EXPORT_CODE_CONFIG_4 values ('APL/CodeUseVarNameAlias', 'false');
 
 drop table ADULT01_APPLY;
-create column table ADULT01_APPLY like ADULT01_T_OUT;
+create table ADULT01_APPLY like ADULT01_T_OUT;
 
 drop table TRAIN_LOG;
 create table TRAIN_LOG like OPERATION_LOG_T;

@@ -24,7 +24,7 @@ create type ADULT01_T_OUT as table (
 
 -- the AFL wrapper generator needs the signature of the expected stored proc
 drop table DEBRIEF_APPLY_RESULT_SIGNATURE;
-create column table DEBRIEF_APPLY_RESULT_SIGNATURE  like PROCEDURE_SIGNATURE_T;
+create table DEBRIEF_APPLY_RESULT_SIGNATURE  like PROCEDURE_SIGNATURE_T;
 insert into DEBRIEF_APPLY_RESULT_SIGNATURE values (1, 'USER_APL', 'FUNCTION_HEADER_T', 'IN');
 insert into DEBRIEF_APPLY_RESULT_SIGNATURE values (2, 'USER_APL', 'OPERATION_CONFIG_T', 'IN');
 insert into DEBRIEF_APPLY_RESULT_SIGNATURE values (3, 'USER_APL', 'VARIABLE_DESC_T', 'IN');
@@ -45,7 +45,7 @@ call SYS.AFLLANG_WRAPPER_PROCEDURE_CREATE('APL_AREA', 'DEBRIEF_APPLY_RESULT', 'U
 -- Create the input/output tables used as arguments for the APL function
 -- --------------------------------------------------------------------------
 drop table FUNC_HEADER;
-create COLUMN table FUNC_HEADER like FUNCTION_HEADER_T;
+create table FUNC_HEADER like FUNCTION_HEADER_T;
 insert into FUNC_HEADER values ('Oid', 'foobar');
 insert into FUNC_HEADER values ('LogLevel', '8');
 insert into FUNC_HEADER values ('CheckOperationConfig', 'true');
@@ -68,16 +68,16 @@ create table STAT_VARIABLE_ROLES like VARIABLE_ROLES_T;
 insert into STAT_VARIABLE_ROLES values ('class', 'target');
 
 drop table OPERATION_LOG;
-create COLUMN table OPERATION_LOG like OPERATION_LOG_T;
+create table OPERATION_LOG like OPERATION_LOG_T;
 
 drop table SUMMARY;
-create COLUMN table SUMMARY like SUMMARY_T;
+create table SUMMARY like SUMMARY_T;
 
 drop table INDICATORS_DATASET;
-create COLUMN table INDICATORS_DATASET like INDICATORS_DATASET_T;
+create table INDICATORS_DATASET like INDICATORS_DATASET_T;
 
 drop table PROFITCURVE;
-create COLUMN table PROFITCURVE like PROFITCURVE_T;
+create table PROFITCURVE like PROFITCURVE_T;
 
 drop view ESTIMATION;
 create view ESTIMATION as (select * from USER_APL.ADULT01_APPLY where "KxIndex" <= 39000 order by "KxIndex");

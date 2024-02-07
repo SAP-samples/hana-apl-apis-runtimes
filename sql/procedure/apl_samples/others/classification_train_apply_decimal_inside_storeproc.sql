@@ -3,7 +3,7 @@ connect USER_APL password Password1;
 
 
 DROP TABLE CENSUS_DECIMAL;
-CREATE COLUMN TABLE CENSUS_DECIMAL("id" integer, "age" DECIMAL, "class" integer);
+create table CENSUS_DECIMAL("id" integer, "age" DECIMAL, "class" integer);
 
 INSERT INTO CENSUS_DECIMAL
 SELECT "id", "age" + "id" * power(10, -5), "class" 

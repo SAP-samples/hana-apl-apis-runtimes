@@ -39,7 +39,7 @@ create type ADULT01_T as table (
 -- --------------------------------------------------------------------------
 -- the AFL wrapper generator needs the signature of the expected stored proc
 drop table RETRAIN_MODEL_SIGNATURE;
-create column table RETRAIN_MODEL_SIGNATURE  like PROCEDURE_SIGNATURE_T;
+create table RETRAIN_MODEL_SIGNATURE  like PROCEDURE_SIGNATURE_T;
 
 insert into RETRAIN_MODEL_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T', 'IN');
 insert into RETRAIN_MODEL_SIGNATURE values (2, 'USER_APL','MODEL_BIN_OID_T', 'IN');

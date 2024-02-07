@@ -1,7 +1,8 @@
 -- @required(hanaMinimumVersion,2.0.40)
 -- ================================================================
 connect USER_APL password Password1;
-set session 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+-- Uncomment to modify the cache location to schema APL_CACHE 
+-- SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 drop type FORECAST_OUT_T;
 create type FORECAST_OUT_T as table (

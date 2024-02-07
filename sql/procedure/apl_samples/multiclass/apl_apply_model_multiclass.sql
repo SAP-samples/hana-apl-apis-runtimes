@@ -6,7 +6,8 @@
 --  @depend(apl_create_model_multiclass.sql)
 
 connect USER_APL password Password1;
-SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+-- Uncomment to modify the cache location to schema APL_CACHE 
+-- SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 -- --------------------------------------------------------------------------
 -- Create table type for the dataset
@@ -37,13 +38,13 @@ create table APPLY_CONFIG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_C
 insert into APPLY_CONFIG values ('APL/ApplyExtraMode', 'BestProbabilityAndDecision',null);
 
 drop table ADULT01_APPLY;
-create column table ADULT01_APPLY like ADULT01_T_OUT;
+create table ADULT01_APPLY like ADULT01_T_OUT;
 
 drop table APPLY_LOG;
-create column table APPLY_LOG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
+create table APPLY_LOG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
 
 drop table SUMMARY;
-create column table SUMMARY like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.SUMMARY";
+create table SUMMARY like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.SUMMARY";
 
 -- --------------------------------------------------------------------------
 -- Execute the APL function using its AFL wrapper and the actual input/output tables

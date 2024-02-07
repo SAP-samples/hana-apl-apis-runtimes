@@ -10,7 +10,8 @@
 -- --------------------------------------------------------------------------
 
 connect USER_APL password Password1;
-SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+-- Uncomment to modify the cache location to schema APL_CACHE 
+-- SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 -- Input table type: dataset
 drop type MOVIES_ATTRIBUTES_T;

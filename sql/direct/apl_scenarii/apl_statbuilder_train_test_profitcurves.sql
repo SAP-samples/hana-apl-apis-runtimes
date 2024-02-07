@@ -50,7 +50,7 @@ create type ADULT01_T as table (
 -- Create AFL wrappers for the APL function
 -- --------------------------------------------------------------------------
 drop table CALL_SIGNATURE;
-create column table CALL_SIGNATURE like PROCEDURE_SIGNATURE_T;
+create table CALL_SIGNATURE like PROCEDURE_SIGNATURE_T;
 
 insert into CALL_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T', 'IN');
 insert into CALL_SIGNATURE values (2, 'USER_APL','OPERATION_CONFIG_T', 'IN');
@@ -79,7 +79,7 @@ call SYS.AFLLANG_WRAPPER_PROCEDURE_CREATE('APL_AREA','TEST_MODEL', 'USER_APL', '
 
 
 drop table CALL_SIGNATURE;
-create column table CALL_SIGNATURE   like PROCEDURE_SIGNATURE_T;
+create table CALL_SIGNATURE   like PROCEDURE_SIGNATURE_T;
 
 insert into CALL_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T', 'IN');
 insert into CALL_SIGNATURE values (2, 'USER_APL','MODEL_BIN_OID_T', 'IN');
@@ -132,7 +132,7 @@ drop table TEST_CONFIG;
 create table TEST_CONFIG like OPERATION_CONFIG_T;
 
 drop table TEST_LOG;
-create column table TEST_LOG like OPERATION_LOG_T;
+create table TEST_LOG like OPERATION_LOG_T;
 
 drop table TEST_INDICATORS;
 create table TEST_INDICATORS like INDICATORS_T;

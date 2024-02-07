@@ -44,7 +44,7 @@ create type RECO_SCORE_T as table (
 -- --------------------------------------------------------------------------
 -- the AFL wrapper generator needs the signature of the expected stored proc
 drop table RECO_SIGNATURE;
-create column table RECO_SIGNATURE like PROCEDURE_SIGNATURE_T;
+create table RECO_SIGNATURE like PROCEDURE_SIGNATURE_T;
 insert into RECO_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T', 'IN');
 insert into RECO_SIGNATURE values (2, 'USER_APL','OPERATION_CONFIG_T', 'IN');
 insert into RECO_SIGNATURE values (3, 'USER_APL','VARIABLE_DESC_T', 'IN');

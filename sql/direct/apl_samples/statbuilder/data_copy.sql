@@ -54,7 +54,7 @@ create type ADULT01_OUT_T as table (
 -- Create AFL wrappers for the APL function
 -- --------------------------------------------------------------------------
 drop table CALL_SIGNATURE;
-create column table CALL_SIGNATURE like PROCEDURE_SIGNATURE_T;
+create table CALL_SIGNATURE like PROCEDURE_SIGNATURE_T;
 insert into CALL_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T', 'IN');
 insert into CALL_SIGNATURE values (2, 'USER_APL','OPERATION_CONFIG_T', 'IN');
 insert into CALL_SIGNATURE values (3, 'USER_APL','VARIABLE_DESC_T', 'IN');
@@ -120,7 +120,7 @@ create table APPLY_CONFIG like OPERATION_CONFIG_T;
 -- TODO: insert apply configuration parameters (to be defined)
 
 drop table ADULT01_APPLY;
-create column table ADULT01_APPLY like ADULT01_OUT_T;
+create table ADULT01_APPLY like ADULT01_OUT_T;
 
 drop table APPLY_LOG;
 create table APPLY_LOG like OPERATION_LOG_T;

@@ -37,7 +37,7 @@ create type ADULT01_T as table (
 -- --------------------------------------------------------------------------
 -- the AFL wrapper generator needs the signature of the expected stored proc
 drop table CALL_SIGNATURE;
-create column table CALL_SIGNATURE   like PROCEDURE_SIGNATURE_T;
+create table CALL_SIGNATURE   like PROCEDURE_SIGNATURE_T;
 insert into CALL_SIGNATURE values (1, 'USER_APL','FUNCTION_HEADER_T',  'IN');
 insert into CALL_SIGNATURE values (2, 'USER_APL','MODEL_BIN_OID_T',     'IN');
 insert into CALL_SIGNATURE values (3, 'USER_APL','OPERATION_CONFIG_T', 'IN');

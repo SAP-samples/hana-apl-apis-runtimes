@@ -9,7 +9,8 @@
 -- --------------------------------------------------------------------------
 
 connect USER_APL password Password1;
-SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
+-- Uncomment to modify the cache location to schema APL_CACHE 
+-- SET SESSION 'APL_CACHE_SCHEMA' = 'APL_CACHE';
 
 
 -- Ouput table type: dataset
@@ -37,13 +38,13 @@ create table APPLY_CONFIG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_C
 -- TODO: insert training configuration parameters (to be defined)
 
 drop table ADULT01_APPLY_TEST;
-create column table ADULT01_APPLY_TEST like ADULT01_T_OUT;
+create table ADULT01_APPLY_TEST like ADULT01_T_OUT;
 
 drop table APPLY_TEST_LOG;
-create column table APPLY_TEST_LOG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
+create table APPLY_TEST_LOG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_LOG";
 
 drop table APPLY_MODEL_AND_TEST_BIN;
-create column table APPLY_MODEL_AND_TEST_BIN like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
+create table APPLY_MODEL_AND_TEST_BIN like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.MODEL_BIN_OID";
 
 drop table APPLY_TEST_INDICATORS;
 create table APPLY_TEST_INDICATORS like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.INDICATORS";
