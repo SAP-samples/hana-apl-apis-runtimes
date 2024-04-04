@@ -20,6 +20,7 @@ DO BEGIN
     declare out_debrief_property "SAP_PA_APL"."sap.pa.apl.base::BASE.T.DEBRIEF_PROPERTY_OID";      
 
     :header.insert(('Oid', '#42'));
+    :header.insert(('CheckOperationConfig', 'true'));
 
     :config.insert(('APL/ModelType', 'regression/classification',null));
    

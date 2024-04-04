@@ -30,21 +30,16 @@ insert into FUNC_HEADER values ('ModelFormat', 'bin');
 drop table APPLY_CONFIG;
 create table APPLY_CONFIG like "SAP_PA_APL"."sap.pa.apl.base::BASE.T.OPERATION_CONFIG_EXTENDED";
 insert into APPLY_CONFIG values ('APL/ApplyExtraMode', 'Advanced Apply Settings',null);
-insert into APPLY_CONFIG values ('APL/ApplyPredictedValue', 'false',null);
-insert into APPLY_CONFIG values ('APL/ApplyDecision', 'true',null);
-insert into APPLY_CONFIG values ('APL/ApplyProbability','true',null);
 insert into APPLY_CONFIG values ('APL/ApplyBestProbability','true',null);
-
--- Copy Variables
-insert into APPLY_CONFIG values ('APL/ApplyCopyVariables','education;occupation',null);
-
-
 insert into APPLY_CONFIG values ('APL/ApplyProba', 'false',null);
 insert into APPLY_CONFIG values ('APL/ApplyProbability','false',null);
 insert into APPLY_CONFIG values ('APL/ApplyDecision', 'false',null);
 insert into APPLY_CONFIG values ('APL/ApplyContribution', 'none',null);
 insert into APPLY_CONFIG values ('APL/ApplyPredictedValue', 'false',null);
 insert into APPLY_CONFIG values ('APL/ApplyProbaDecision', 'true',null);
+
+-- Copy Variables
+insert into APPLY_CONFIG values ('APL/ApplyCopyVariables','education;occupation',null);
 
 -- Reason Code
 --insert into APPLY_CONFIG values ('APL/ApplyReasonCode/TopCount', '1',null);
