@@ -66,6 +66,8 @@ DO BEGIN
 
     :config.insert(('APL/SegmentColumnName', 'Seg',null)); -- define the column used as the segmentation colum
     :config.insert(('APL/ModelType', 'binary classification',null));
+    :config.insert(('APL/TargetKey','1',null));
+
 
     :var_role.insert(('class', 'target', null, null, null));
 

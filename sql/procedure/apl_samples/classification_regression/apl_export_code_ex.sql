@@ -66,7 +66,7 @@ insert into EXPORT_CODE_CONFIG_4 values ('APL/CodeTarget', 'class',null);
 insert into EXPORT_CODE_CONFIG_4 values ('APL/CodeClassName', 'ExportedModelInCPP',null);
 insert into EXPORT_CODE_CONFIG_4 values ('APL/ApplyExtraMode', 'No Extra',null);
 
-DO BEGIN     
+DO BEGIN SEQUENTIAL EXECUTION    
     header           = select * from FUNC_HEADER;             
     model_in         = select * from MODEL_TRAIN_BIN;
     export_1_config  = select * from EXPORT_CODE_CONFIG_1; 

@@ -1,0 +1,201 @@
+#!/bin/bash
+###############################################################################
+# check_apl - SAP HANA APL Installation & Runtime Checker
+#
+# This script connects to a SAP HANA instance and runs the APL check SQL script.
+# It supports interactive and non-interactive modes, help system, and robust
+# parameter handling.
+#
+# Usage:
+#   ./check_apl [OPTIONS]
+#
+# Options:
+#   -h, --host <host:port>              HANA DB host and port (default: hana:30015)
+#   -u, --user <user>                   HANA DB user (default: SYSTEM)
+#   -p, --password <password>           HANA DB user password (default: Manager1)
+#   -f, --format <format>               Output format: md (Markdown), raw, etc. (default: md)
+#   -s, --signal-error <on|off>         Signal error in output (default: off)
+#   --check_apl-password <password>     Password for CHECK_APL user (default: Password1)
+#   --help                              Show this help message and exit
+#  When missing, the script will prompt for mandatory parameters (host,user,password) interactively.
+#  Extra hdbsql parameters can be passed after the mandatory ones, and they will be appended to the hdbsql command.
+#
+# Examples:
+#  ./check_apl -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md
+#  ./check_apl -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md -e -ssltrustcert
+###############################################################################
+
+set -e
+
+if [[ -n "$SAP_HOSTNAME" ]]; then
+    DEFAULT_DB_HOST="$SAP_HOSTNAME"
+else
+    DEFAULT_DB_HOST="hana:30015"
+fi
+DEFAULT_DB_SYSTEM="SYSTEM"
+DEFAULT_DB_SYSTEM_PASSWORD="Manager1"
+DEFAULT_OUTPUT_FORMAT="md"
+DEFAULT_SIGNAL_ERROR="off"
+DEFAULT_CHECK_APL_PASSWORD="Password1"
+DEFAULT_OUTPUT_FILE="hana.md"
+OUTPUT_FILE=""
+
+show_help() {
+    cat <<EOF
+Usage: $0 [OPTIONS]
+
+Options:
+  -h, --host <host:port>                HANA DB host and port (default: $DEFAULT_DB_HOST)
+  -u, --system_user <user>              HANA DB system user (default: $DEFAULT_DB_SYSTEM)
+  -p, --system_password <password>      HANA DB system user password (default: $DEFAULT_DB_SYSTEM_PASSWORD)
+  -f, --format <format>                 Output format (default: $DEFAULT_OUTPUT_FORMAT)
+  -s, --signal-error <on|off>           Signal error in output (default: $DEFAULT_SIGNAL_ERROR)
+  -o <output_file>                      File path to store output (default: $DEFAULT_OUTPUT_FILE)
+  --check_apl-password <password>       Password for CHECK_APL user (default: $DEFAULT_CHECK_APL_PASSWORD)
+  --show-cmd-only                       Show the final hdbsql command and exit
+  --help                                Show this help message and exit
+When missing, the script will prompt for mandatory parameters (host,user,password) interactively.
+Extra hdbsql parameters can be passed after the mandatory ones, and they will be appended to the hdbsql command.
+
+Examples:
+  $0 -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md
+  $0 -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md -e -ssltrustcert
+
+EOF
+    exit 0
+}
+
+# Collect unknown parameters
+EXTRA_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--host)
+            DB_HOST="$2"
+            shift 2
+            ;;
+        -u|--system_user)
+            DB_SYSTEM="$2"
+            shift 2
+            ;;
+        -p|--system_password)
+            DB_SYSTEM_PASSWORD="$2"
+            shift 2
+            ;;
+        -f|--format)
+            OUTPUT_FORMAT="$2"
+            shift 2
+            ;;
+        -s|--signal-error)
+            SIGNAL_ERROR="$2"
+            shift 2
+            ;;
+        -o)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        --check_apl-password)
+            CHECK_APL_PASSWORD="$2"
+            shift 2
+            ;;
+        --show-cmd-only)
+            SHOW_CMD_ONLY=1
+            shift
+            ;;
+        --help)
+            show_help
+            ;;
+        *)
+            EXTRA_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+# Interactive values for missing parameters host,system user, system user password
+if [[ -z "$DB_HOST" ]]; then
+    read -rp "Enter HANA DB host:port [$DEFAULT_DB_HOST]: " DB_HOST
+    DB_HOST=${DB_HOST:-$DEFAULT_DB_HOST}
+fi
+if [[ -z "$DB_SYSTEM" ]]; then
+    read -rp "Enter HANA DB system user [$DEFAULT_DB_SYSTEM]: " DB_SYSTEM
+    DB_SYSTEM=${DB_SYSTEM:-$DEFAULT_DB_SYSTEM}
+fi
+if [[ -z "$DB_SYSTEM_PASSWORD" ]]; then
+    read -rsp "Enter HANA DB user password [$DEFAULT_DB_SYSTEM_PASSWORD]: " DB_SYSTEM_PASSWORD
+    DB_SYSTEM_PASSWORD=${DB_SYSTEM_PASSWORD:-$DEFAULT_DB_SYSTEM_PASSWORD}
+    echo
+fi
+if [[ -z "$CHECK_APL_PASSWORD" ]]; then
+    CHECK_APL_PASSWORD="$DEFAULT_CHECK_APL_PASSWORD"
+fi
+if [[ -z "$OUTPUT_FORMAT" ]]; then
+    OUTPUT_FORMAT="$DEFAULT_OUTPUT_FORMAT"
+fi
+if [[ -z "$SIGNAL_ERROR" ]]; then
+    SIGNAL_ERROR="$DEFAULT_SIGNAL_ERROR"
+fi
+if [[ -z "$OUTPUT_FILE" ]]; then
+    read -rp "Enter output file path (use 'stdout' for results on console: $DEFAULT_OUTPUT_FILE): " OUTPUT_FILE
+    OUTPUT_FILE=${OUTPUT_FILE:-$DEFAULT_OUTPUT_FILE}
+fi
+
+HDBSQL=$(command -v hdbsql || true)
+if [[ -z "$HDBSQL" ]]; then
+    # First, try /usr/sap/hdbclient/hdbsql (highest priority)
+    if [[ -x "/usr/sap/hdbclient/hdbsql" ]]; then
+        HDBSQL="/usr/sap/hdbclient/hdbsql"
+    else
+        # Then, try to find the most recent hdbsql in /usr/sap/hdbclient_*
+        HDBSQL=$(find /usr/sap -maxdepth 1 -type d -name "hdbclient*" | sort -V | tail -n 1)/hdbsql
+        if [[ ! -x "$HDBSQL" ]]; then
+            echo "Error: hdbsql not found in PATH, /usr/sap/hdbclient/hdbsql, or in any /usr/sap/hdbclient*/hdbsql"
+            exit 1
+        fi
+    fi
+fi
+
+export HANA_SYSTEM_USER="$DB_SYSTEM"
+export HANA_SYSTEM_USER_PASSWORD="$DB_SYSTEM_PASSWORD"
+export CHECK_APL_PASSWORD
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+SQL_SCRIPT="$SCRIPT_DIR/check_apl.sql"
+if [[ ! -f "$SQL_SCRIPT" ]]; then
+    echo "Error: SQL script not found at $SQL_SCRIPT"
+    exit 1
+fi
+
+echo "Checking SAP HANA instance $DB_HOST as $DB_SYSTEM to $OUTPUT_FILE ..."
+echo
+
+HDBSQL_CMD="\"$HDBSQL\" -n \"$DB_HOST\" \
+    -u \"$HANA_SYSTEM_USER\" \
+    -p \"$HANA_SYSTEM_USER_PASSWORD\" \
+    -V OUTPUT_FORMAT=\"$OUTPUT_FORMAT\",SIGNAL_ERROR=\"$SIGNAL_ERROR\",SYSTEM_USER=\"$HANA_SYSTEM_USER\",SYSTEM_PASSWORD=\"$HANA_SYSTEM_USER_PASSWORD\",CHECK_APL_PASSWORD=\"$CHECK_APL_PASSWORD\" \
+    -j -I \"$SQL_SCRIPT\" -A -a -F ' '"
+
+# Inject unknown/extra parameters
+if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
+    for arg in "${EXTRA_ARGS[@]}"; do
+        HDBSQL_CMD="$HDBSQL_CMD $arg"
+    done
+fi
+
+if [[ -n "$OUTPUT_FILE" && "$OUTPUT_FILE" != "stdout" ]]; then
+    HDBSQL_CMD="$HDBSQL_CMD -o \"$OUTPUT_FILE\""
+fi
+
+if [[ "$SHOW_CMD_ONLY" -eq 1 ]]; then
+    # Mask passwords in the displayed command
+    DISPLAY_CMD="$HDBSQL_CMD"
+    DISPLAY_CMD="${DISPLAY_CMD//\"$HANA_SYSTEM_USER_PASSWORD\"/\"****\"}"
+    DISPLAY_CMD="${DISPLAY_CMD//SYSTEM_PASSWORD=\\\"$HANA_SYSTEM_USER_PASSWORD\\\"/SYSTEM_PASSWORD=\\\"****\\\"}"
+    echo "Final hdbsql command:"
+    echo "$DISPLAY_CMD"
+    exit 0
+fi
+
+eval $HDBSQL_CMD
+
+exit $?

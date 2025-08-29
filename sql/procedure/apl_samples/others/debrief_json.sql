@@ -21,7 +21,7 @@ DO BEGIN
 	:config.insert(('APL/DebriefFormat', 'application/vnd.sap.aa.debrief.generic.1.0',NULL));
     :config.insert(('APL/DebriefMetadata', 'true',null));
     :config.insert(('APL/DebriefId', '10',null));
-    :config.insert(('APL/DebriefVersion', '1.3.0.0',null));
+    :config.insert(('APL/DebriefVersion', '1.3.1.0',null));
 
     :var_role.insert(('class', 'target', null, null, null));
 

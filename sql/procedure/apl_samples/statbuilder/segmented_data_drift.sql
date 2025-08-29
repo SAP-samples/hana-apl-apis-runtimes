@@ -91,3 +91,15 @@ select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Statistics_Partition"(USE
 select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Statistics_Variables"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC);
 select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Statistics_CategoryFrequencies"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC);
 select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Statistics_ContinuousVariables"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC);
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Deviation_ByVariable"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC);
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Deviation_ByVariable"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC, Deviation_Threshold => 0.2);
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Deviation_ByCategory"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC);
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Deviation_ByCategory"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC, Deviation_Threshold => 0.2);
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Deviation_TargetBasedByCategory"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC);
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Deviation_TargetBasedByCategory"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC, Deviation_Threshold => 0.2);    
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Deviation_CategoryFrequencies"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC); 
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Deviation_ByGroup"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC);
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Deviation_ByGroup"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC, Deviation_Threshold => 0.2);
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Deviation_TargetBasedByGroup"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC);
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Deviation_TargetBasedByGroup"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC, Deviation_Threshold => 0.2);
+select * from "SAP_PA_APL"."sap.pa.apl.debrief.report::Deviation_GroupFrequencies"(USER_APL.DEBRIEF_PROPERTY, USER_APL.DEBRIEF_METRIC); 

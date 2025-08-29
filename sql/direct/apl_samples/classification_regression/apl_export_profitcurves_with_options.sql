@@ -62,7 +62,7 @@ insert into EXPORT_CONFIG_3 values ('APL/CurvePointCount', '30');
 insert into EXPORT_CONFIG_3 values ('APL/CurveBasedOnFrequency', 'true');
 insert into EXPORT_CONFIG_3 values ('APL/CurveUsingWeight', 'true');
 insert into EXPORT_CONFIG_3 values ('APL/CurveUsingGroups', 'true');
-DO BEGIN     
+DO BEGIN SEQUENTIAL EXECUTION        
     header           = select * from FUNC_HEADER;             
     model_in         = select * from MODEL_TRAIN_BIN;
     export_1_config  = select * from EXPORT_CONFIG_1; 
