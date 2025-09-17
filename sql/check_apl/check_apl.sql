@@ -14,12 +14,12 @@
 
 -- This SQL script can be run only by standard SAP hdbsql command line tool available in every HANA installation
 
--- The Unix script check_apl is provided to run this SQL script with the right parameters
+-- The Unix script check_apl.sh is provided to run this SQL script with the right parameters
 -- The script will generate a markdown output that document the APL installation and runtime
 -- The output is meant to be used as a markdown file, so it can be easily read in a browser or in any markdown viewer
 
 -- Usage:
---   check_apl [OPTIONS]
+--   check_apl.sh [OPTIONS]
 --
 -- Options:
 --  -h, --host <host:port>              HANA DB host and port (default: hana:30015)
@@ -31,7 +31,7 @@
 --  --help                              Show this help message and exit
 --
 -- Example:
---   ./check_apl -h hana:30015 -u SYSTEM -p MySystemPassword 
+--   ./check_apl.sh -h hana:30015 -u SYSTEM -p MySystemPassword 
 --
 -- Advanced and optional parameters:
 -- -s, --signal-error: If set to 'off' (default value), the script will generate a report. If set to 'on' the script will signal an error in the output if any issue is found during the checks, 
@@ -56,7 +56,8 @@ DO BEGIN
 	DECLARE major INT;
 	DECLARE nb_import_threads INT;
 	DECLARE note_results TABLE ("Note|Status" NVARCHAR(5000));
-	:note_results.insert(('# Check APL installation and runtime ' || current_date || ' ' || current_time));
+	:note_results.insert(('# Check APL installation and runtime'));
+	:note_results.insert(('Report date: ' || current_date || ' ' || current_time));
 	:note_results.insert(('## Notes'));
 	:note_results.insert(('Note|Status'));
 	:note_results.insert((REPLACE('___|___','_','-')));
@@ -162,6 +163,16 @@ LANGUAGE SQLSCRIPT
 SQL SECURITY INVOKER
 DETERMINISTIC 
 AS BEGIN
+	IF :input = 'ERROR' OR :input = 'ISSUE' OR :input = 'ACTION'
+	THEN
+		filtered := '<span style="color:red">**'||UPPER(:input)||'**</span>';
+		RETURN;
+	END IF;
+	IF UPPER(:input) = 'OK'
+	THEN
+		filtered := '<span style="color:green">**'||UPPER(:input)||'**</span>';
+		RETURN;
+	END IF;
 	filtered := REPLACE(REPLACE(COALESCE(:input,''),'<','&lt;'),'>','&gt;');
 END;
 
@@ -516,7 +527,9 @@ BEGIN
 		:known_versions.insert(('2508','171','192'));
 		:known_versions.insert(('2510','171','192'));
 		:known_versions.insert(('2512','171','192'));
-		:known_versions.insert(('2514','171','192'));
+		:known_versions.insert(('2514','172','193'));
+		:known_versions.insert(('2516','172','193'));
+		:known_versions.insert(('2520','172','193'));
 		-- we search if the current version is a well known version
 		SELECT "VERSION","TABLES_TYPES","DU_APIS" into ref_version,ref_nb_apl_tables_types,ref_nb_apl_dus DEFAULT 'NotFound',-1,-1 FROM :known_versions WHERE "VERSION" = :du_version;
 		IF :ref_version = 'NotFound'
@@ -538,7 +551,7 @@ BEGIN
 				THEN
 					:results.insert(('Sensible # of APL DU APIS','OK',:nb_apl_du_apis || ' >= ' || :ref_nb_apl_dus));
 				ELSE
-					:results.insert(('# of APL DU APIS','ISSUE',:nb_apl_du_apis || ' is suspicously low. It should be at least ' || :ref_nb_apl_dus));
+					:results.insert(('# of APL DU APIS','ISSUE',:nb_apl_du_apis || ' is suspiciously low. It should be at least ' || :ref_nb_apl_dus));
 				END IF;
 			ELSE
 				:results.insert(('This is an unlisted old On Premise version of APL','',:du_version));
@@ -854,7 +867,7 @@ BEGIN
 	"GET_IS_HCE"(is_hce);
 
 	SELECT "DATABASE_NAME" into database_name FROM M_DATABASE;
-	:results.insert(('section:','','Checking installation of APL in database **' || :database_name || '**'));
+	:results.insert(('section:','','Checking installation of APL in database ' || :database_name));
 
 	:results.insert(('subsection:','|Check|Status|Details|','Global status of APL plugin'));
 	SELECT COUNT(*) into nb FROM M_PLUGIN_MANIFESTS WHERE "PLUGIN_NAME"='SAP_AFL_SDK_APL';
@@ -918,7 +931,7 @@ BEGIN
 		:results.insert(('Good # of descriptions of APL low level calls','OK',:nb));
 	END IF;
 
-	:results.insert(('subsection:','|Check|Status|Details','Detailed registration of APL high level SQL procedures (APL DU or Hana Cloud SQLAutoContent)'));
+	:results.insert(('subsection:','|Check|Status|Details','Detailed registration of APL high level SQL procedures - DU or SQLAutoContent'));
 	IF :is_hce = false
 	THEN
 		CALL "GET_HAS_RIGHT_TO_OBJECT"(CURRENT_USER,'SELECT','_SYS_REPO','DELIVERY_UNITS',has_right);
@@ -1416,7 +1429,7 @@ BEGIN
 	DECLARE database_name NVARCHAR(1000);
 
 	SELECT "DATABASE_NAME" into database_name FROM "M_DATABASE";
-	:results.insert(('section:','','Checking installation of APL in database **' || :database_name || '**'));
+	:results.insert(('section:','','Checking installation of APL in database ' || :database_name));
 	CALL "GET_HAS_RIGHT_TO_OBJECT"(CURRENT_USER,'SELECT','_SYS_REPO','DELIVERY_UNITS',has_right);
 	IF :has_right = TRUE
 	THEN
@@ -1477,7 +1490,7 @@ BEGIN
 		SELECT TOP 1 "VALUE" ||' ?',count(*) into hana_platform,nb_platform DEFAULT 'unknown',0 FROM "M_PLUGIN_MANIFESTS" WHERE "KEY"='platform' GROUP BY "VALUE" ORDER BY 2 DESC;
 	END IF;
 
-	:final_results.insert(('title:','','Full check of APL installation and runtime ' || current_date || ' ' || current_time));
+	:final_results.insert(('title:','','Full check of APL installation and runtime'));
 
 	:prerequisite_results.insert(('section:','','Pre-analysis'));
 	:prerequisite_results.insert(('table:','|Main component|Status|Details|',''));
@@ -1556,14 +1569,29 @@ BEGIN
 	-- so default is to not emit an error
 	-- except if explicitly requested by user or QA context
 
-	-- default is to not report an error;
-	report_error = FALSE;
-	IF 'on'='&SIGNAL_ERROR'
+	-- if running from hdbsql, DBeaver, HDBStudio
+	-- 	this is the normal usage of this script:
+	--  		report only
+	--			no hard error transmitted to caller
+	-- if running from anything else:
+	-- 		we consider it is from a test environment
+	-- 		hard error is transmitted to caller
+
+	SELECT "VALUE" into context FROM "M_SESSION_CONTEXT" WHERE "CONNECTION_ID"=CURRENT_CONNECTION AND "KEY"='APPLICATION';
+	IF :context LIKE 'DBeaver%' OR :context='HDBStudio' OR :context='hdbsql'
 	THEN
+		-- normal usage: report only
+		report_error = FALSE;
+	ELSE
+		-- we are in a test environment: report error
 		report_error = TRUE;
 	END IF;
-	SELECT "VALUE" into context FROM "M_SESSION_CONTEXT" WHERE "CONNECTION_ID"=CURRENT_CONNECTION AND "KEY"='APPLICATION';
+	-- special case : explicitely requested to report error
+	IF 'on'='&SIGNAL_ERROR'
+	THEN
+			report_error = TRUE;
 
+	END IF;
 	-- default output format is md
 	output_format = 'md';
 	IF '&OUTPUT_FORMAT' <> '&'||'OUTPUT_FORMAT'
@@ -1612,4 +1640,3 @@ CALL "CHECK_FULL_INSTALL"();
 connect &SYSTEM_USER PASSWORD &SYSTEM_PASSWORD;
 -- clean the user and the schema
 DROP USER CHECK_APL CASCADE;
-

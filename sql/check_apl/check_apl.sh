@@ -1,13 +1,13 @@
 #!/bin/bash
 ###############################################################################
-# check_apl - SAP HANA APL Installation & Runtime Checker
+# check_apl.sh - SAP HANA APL Installation & Runtime Checker
 #
 # This script connects to a SAP HANA instance and runs the APL check SQL script.
 # It supports interactive and non-interactive modes, help system, and robust
 # parameter handling.
 #
 # Usage:
-#   ./check_apl [OPTIONS]
+#   ./check_apl.sh [OPTIONS]
 #
 # Options:
 #   -h, --host <host:port>              HANA DB host and port (default: hana:30015)
@@ -21,8 +21,8 @@
 #  Extra hdbsql parameters can be passed after the mandatory ones, and they will be appended to the hdbsql command.
 #
 # Examples:
-#  ./check_apl -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md
-#  ./check_apl -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md -e -ssltrustcert
+#  ./check_apl.sh -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md
+#  ./check_apl.sh -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md -e -ssltrustcert
 ###############################################################################
 
 set -e
@@ -182,13 +182,15 @@ if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
     done
 fi
 
+# Store the original command for display purposes (with -o parameter if needed)
+DISPLAY_HDBSQL_CMD="$HDBSQL_CMD"
 if [[ -n "$OUTPUT_FILE" && "$OUTPUT_FILE" != "stdout" ]]; then
-    HDBSQL_CMD="$HDBSQL_CMD -o \"$OUTPUT_FILE\""
+    DISPLAY_HDBSQL_CMD="$DISPLAY_HDBSQL_CMD -o \"$OUTPUT_FILE\""
 fi
 
 if [[ "$SHOW_CMD_ONLY" -eq 1 ]]; then
     # Mask passwords in the displayed command
-    DISPLAY_CMD="$HDBSQL_CMD"
+    DISPLAY_CMD="$DISPLAY_HDBSQL_CMD"
     DISPLAY_CMD="${DISPLAY_CMD//\"$HANA_SYSTEM_USER_PASSWORD\"/\"****\"}"
     DISPLAY_CMD="${DISPLAY_CMD//SYSTEM_PASSWORD=\\\"$HANA_SYSTEM_USER_PASSWORD\\\"/SYSTEM_PASSWORD=\\\"****\\\"}"
     echo "Final hdbsql command:"
@@ -196,6 +198,15 @@ if [[ "$SHOW_CMD_ONLY" -eq 1 ]]; then
     exit 0
 fi
 
-eval $HDBSQL_CMD
+# Execute the command and filter out SQL warnings containing 'HY000'
+if [[ -n "$OUTPUT_FILE" && "$OUTPUT_FILE" != "stdout" ]]; then
+    # Output to file: filter warnings and redirect to file
+    eval $HDBSQL_CMD | grep -v 'HY000' > "$OUTPUT_FILE"
+    exit_code=${PIPESTATUS[0]}
+else
+    # Output to stdout: filter warnings
+    eval $HDBSQL_CMD | grep -v 'HY000'
+    exit_code=${PIPESTATUS[0]}
+fi
 
-exit $?
+exit $exit_code

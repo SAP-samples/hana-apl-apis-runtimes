@@ -26,12 +26,12 @@ DROP USER CHECK_APL CASCADE;
 
 ## Command line
 
-To run the APL check script, use the provided `check_apl` shell script. This script will connect to your SAP HANA instance and execute the SQL checks automatically.
+To run the APL check script, use the provided `check_apl.sh` shell script. This script will connect to your SAP HANA instance and execute the SQL checks automatically.
 
 ### Basic usage
 
 ```sh
-check_apl -h <host:port> -u <user> -p <password> -o output_file
+check_apl.sh -h <host:port> -u <user> -p <password> -o output_file
 ```
 
 - `-h` or `--host` : HANA DB host and port (e.g., hana:30015)
@@ -53,7 +53,7 @@ If any required parameter is missing, the script will prompt you interactively.
 Default for the script is to use Markdown format and redirect the output to a file named hana.md that can be communicated to SAP support.
 
 ```sh
-./check_apl -h hana:30015 -u SYSTEM -p MyPassword -o hana.md
+./check_apl.sh -h hana:30015 -u SYSTEM -p MyPassword -o hana.md
 ```
 
 ## Examples of results: 
