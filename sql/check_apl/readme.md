@@ -37,7 +37,7 @@ check_apl.sh -h <host:port> -u <user> -p <password> -o output_file
 - `-h` or `--host` : HANA DB host and port (e.g., hana:30015)
 - `-u` or `--system_user` : HANA DB user (e.g., SYSTEM)
 - `-p` or `--system_password` : HANA DB user password
-- `-o` : Output file to save the results (e.g., hana.md). Use stdout to see results in console
+- `-o` : Output file to save the results (e.g., hana.md.txt). Use stdout to see results in console
 If any required parameter is missing, the script will prompt you interactively.
 
 ### Optional parameters
@@ -50,10 +50,10 @@ If any required parameter is missing, the script will prompt you interactively.
 - `--help` : Show help message and exit
 
 ### Output format and results.
-Default for the script is to use Markdown format and redirect the output to a file named hana.md that can be communicated to SAP support.
+Default for the script is to use Markdown format and redirect the output to a file named hana.md.txt that can be communicated to SAP support.
 
 ```sh
-./check_apl.sh -h hana:30015 -u SYSTEM -p MyPassword -o hana.md
+./check_apl.sh -h hana:30015 -u SYSTEM -p MyPassword -o hana.md.txt
 ```
 
 ## Examples of results: 
@@ -61,3 +61,6 @@ Default for the script is to use Markdown format and redirect the output to a fi
 * [APL fully OK on HANA On Premise](./check_on_premise_ok.txt)
 
 * [APL fully OK on HANA Cloud](./check_hce_ok.txt)
+
+## Note
+default output files is hana.md.txt and not hana.md to avoid issues when transmitting it to SAP support: some mail systems or tools may block or alter files with .md extension.

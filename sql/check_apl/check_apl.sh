@@ -15,14 +15,14 @@
 #   -p, --password <password>           HANA DB user password (default: Manager1)
 #   -f, --format <format>               Output format: md (Markdown), raw, etc. (default: md)
 #   -s, --signal-error <on|off>         Signal error in output (default: off)
-#   --check_apl-password <password>     Password for CHECK_APL user (default: Password1)
+#   --check_apl-password <password>     Password for CHECK_APL user (default: Password01Password01)
 #   --help                              Show this help message and exit
 #  When missing, the script will prompt for mandatory parameters (host,user,password) interactively.
 #  Extra hdbsql parameters can be passed after the mandatory ones, and they will be appended to the hdbsql command.
 #
 # Examples:
-#  ./check_apl.sh -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md
-#  ./check_apl.sh -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md -e -ssltrustcert
+#  ./check_apl.sh -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md.txt
+#  ./check_apl.sh -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md.txt -e -ssltrustcert
 ###############################################################################
 
 set -e
@@ -36,8 +36,8 @@ DEFAULT_DB_SYSTEM="SYSTEM"
 DEFAULT_DB_SYSTEM_PASSWORD="Manager1"
 DEFAULT_OUTPUT_FORMAT="md"
 DEFAULT_SIGNAL_ERROR="off"
-DEFAULT_CHECK_APL_PASSWORD="Password1"
-DEFAULT_OUTPUT_FILE="hana.md"
+DEFAULT_CHECK_APL_PASSWORD="Password01Password01"
+DEFAULT_OUTPUT_FILE="hana.md.txt"
 OUTPUT_FILE=""
 
 show_help() {
@@ -58,8 +58,8 @@ When missing, the script will prompt for mandatory parameters (host,user,passwor
 Extra hdbsql parameters can be passed after the mandatory ones, and they will be appended to the hdbsql command.
 
 Examples:
-  $0 -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md
-  $0 -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md -e -ssltrustcert
+  $0 -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.txt
+  $0 -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md.txt -e -ssltrustcert
 
 EOF
     exit 0
@@ -122,12 +122,14 @@ if [[ -z "$DB_SYSTEM" ]]; then
     DB_SYSTEM=${DB_SYSTEM:-$DEFAULT_DB_SYSTEM}
 fi
 if [[ -z "$DB_SYSTEM_PASSWORD" ]]; then
-    read -rsp "Enter HANA DB user password [$DEFAULT_DB_SYSTEM_PASSWORD]: " DB_SYSTEM_PASSWORD
+    read -rsp "Enter HANA DB system user password [$DEFAULT_DB_SYSTEM_PASSWORD]: " DB_SYSTEM_PASSWORD
     DB_SYSTEM_PASSWORD=${DB_SYSTEM_PASSWORD:-$DEFAULT_DB_SYSTEM_PASSWORD}
     echo
 fi
 if [[ -z "$CHECK_APL_PASSWORD" ]]; then
-    CHECK_APL_PASSWORD="$DEFAULT_CHECK_APL_PASSWORD"
+    read -rsp "Enter CHECK_APL user password; Do not forget your current password policy! [$DEFAULT_CHECK_APL_PASSWORD]: " CHECK_APL_PASSWORD
+    CHECK_APL_PASSWORD=${CHECK_APL_PASSWORD:-$DEFAULT_CHECK_APL_PASSWORD}
+    echo
 fi
 if [[ -z "$OUTPUT_FORMAT" ]]; then
     OUTPUT_FORMAT="$DEFAULT_OUTPUT_FORMAT"

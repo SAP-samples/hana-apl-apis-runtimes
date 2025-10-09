@@ -15,16 +15,16 @@ REM   -u <user>                   HANA DB user (default: SYSTEM)
 REM   -p <password>               HANA DB user password (default: Manager1)
 REM   -f <format>                 Output format: md (Markdown), raw, etc. (default: md)
 REM   -s <on|off>                 Signal error in output (default: off)
-REM   -o <output_file>            File path to store output (default: hana.md)
-REM   --check_apl-password <pwd>  Password for CHECK_APL user (default: Password1)
+REM   -o <output_file>            File path to store output (default: hana.md.txt)
+REM   --check_apl-password <pwd>  Password for CHECK_APL user (default: Password01Password01)
 REM   --show-cmd-only             Show the final hdbsql command and exit
 REM   --help                      Show this help message and exit
 REM When missing, the script will prompt for mandatory parameters (host,user,password) interactively.
 REM Extra hdbsql parameters can be passed after the mandatory ones, and they will be appended to the hdbsql command.
 REM
 REM Examples:
-REM  check_apl -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md
-REM  check_apl -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md -e -ssltrustcert
+REM  check_apl -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md.txt
+REM  check_apl -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md.txt -e -ssltrustcert
 REM
 
 setlocal enabledelayedexpansion
@@ -45,8 +45,8 @@ set "DEFAULT_DB_USER=SYSTEM"
 set "DEFAULT_DB_PASSWORD=Manager1"
 set "DEFAULT_OUTPUT_FORMAT=md"
 set "DEFAULT_SIGNAL_ERROR=off"
-set "DEFAULT_CHECK_APL_PASSWORD=Password1"
-set "DEFAULT_OUTPUT_FILE=hana.md"
+set "DEFAULT_CHECK_APL_PASSWORD=Password01Password01"
+set "DEFAULT_OUTPUT_FILE=hana.md.txt"
 set "OUTPUT_FILE="
 set "SHOW_CMD_ONLY=0"
 
@@ -99,11 +99,12 @@ if "%DB_USER%"=="" (
     if "!DB_USER!"=="" set "DB_USER=%DEFAULT_DB_USER%"
 )
 if "%DB_PASSWORD%"=="" (
-    set /p DB_PASSWORD=Enter HANA DB user password [Manager1]: 
+    set /p DB_PASSWORD=Enter HANA DB SYSTEM user password [Manager1]: 
     if "!DB_PASSWORD!"=="" set "DB_PASSWORD=%DEFAULT_DB_PASSWORD%"
 )
 if "%CHECK_APL_PASSWORD%"=="" (
-    set "CHECK_APL_PASSWORD=%DEFAULT_CHECK_APL_PASSWORD%"
+    set /p CHECK_APL_PASSWORD=Enter CHECK_APL user password; Do not forget your current password policy! [Password1]: 
+    if "!CHECK_APL_PASSWORD!"=="" set "CHECK_APL_PASSWORD=%DEFAULT_CHECK_APL_PASSWORD%"
 )
 if "%SIGNAL_ERROR%"=="" (
     set "SIGNAL_ERROR=%DEFAULT_SIGNAL_ERROR%"
@@ -112,7 +113,7 @@ if "%OUTPUT_FORMAT%"=="" (
     set "OUTPUT_FORMAT=%DEFAULT_OUTPUT_FORMAT%"
 )
 if "%OUTPUT_FILE%"=="" (
-    set /p OUTPUT_FILE=Enter output file path Use 'stdout' to see results in console [hana.md]: 
+    set /p OUTPUT_FILE=Enter output file path Use 'stdout' to see results in console [hana.md.txt]: 
     if "!OUTPUT_FILE!"=="" set "OUTPUT_FILE=%DEFAULT_OUTPUT_FILE%"
 )
 
@@ -173,7 +174,7 @@ echo   -u ^<user^>                   HANA DB user (default: SYSTEM)
 echo   -p ^<password^>               HANA DB user password (default: Manager1)
 echo   -f ^<format^>                 Output format: md (Markdown), raw, etc. (default: md)
 echo   -s ^<on^|off^>                Signal error in output (default: off)
-echo   -o ^<output_file^>            File path to store output (default: hana.md)
+echo   -o ^<output_file^>            File path to store output (default: hana.md.txt)
 echo   --check_apl-password ^<pwd^>  Password for CHECK_APL user (default: Password1)
 echo   --show-cmd-only               Show the final hdbsql command and exit
 echo   --help                        Show this help message and exit
@@ -181,7 +182,7 @@ echo When missing, the script will prompt for mandatory parameters (host,user,pa
 echo Extra hdbsql parameters can be passed after the mandatory ones, and they will be appended to the hdbsql command.
 echo.
 echo Examples:
-echo  check_apl -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md
-echo  check_apl -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md -e -ssltrustcert
+echo  check_apl -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md.txt
+echo  check_apl -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md.txt -e -ssltrustcert
 echo.
 exit /b 0

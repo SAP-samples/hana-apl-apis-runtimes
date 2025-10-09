@@ -27,7 +27,7 @@
 --  -p, --password <password>           HANA DB user password (default: Manager1)
 --  -f, --format <format>               Output format: md (Markdown), raw. (default: md)
 --  -s, --signal-error <on|off>         Signal error in output (default: off)
---  --check_apl-password <password>     Password for CHECK_APL user (default: Password1)
+--  --check_apl-password <password>     Password for CHECK_APL user (default: Password01Password01)
 --  --help                              Show this help message and exit
 --
 -- Example:
@@ -530,6 +530,7 @@ BEGIN
 		:known_versions.insert(('2514','172','193'));
 		:known_versions.insert(('2516','172','193'));
 		:known_versions.insert(('2520','172','193'));
+		:known_versions.insert(('2522','172','193'));
 		-- we search if the current version is a well known version
 		SELECT "VERSION","TABLES_TYPES","DU_APIS" into ref_version,ref_nb_apl_tables_types,ref_nb_apl_dus DEFAULT 'NotFound',-1,-1 FROM :known_versions WHERE "VERSION" = :du_version;
 		IF :ref_version = 'NotFound'
