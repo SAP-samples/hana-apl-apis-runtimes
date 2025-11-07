@@ -58,7 +58,7 @@ When missing, the script will prompt for mandatory parameters (host,user,passwor
 Extra hdbsql parameters can be passed after the mandatory ones, and they will be appended to the hdbsql command.
 
 Examples:
-  $0 -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.txt
+  $0 -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md.txt
   $0 -h hana:30015 -u SYSTEM -p MyPassword -o /tmp/hana.md.txt -e -ssltrustcert
 
 EOF
@@ -168,6 +168,12 @@ if [[ ! -f "$SQL_SCRIPT" ]]; then
     exit 1
 fi
 
+PRECHECK_SQL_SCRIPT="$SCRIPT_DIR/check_create_CHECK_APL_user.sql"
+if [[ ! -f "$PRECHECK_SQL_SCRIPT" ]]; then
+    echo "Error: SQL script not found at $PRECHECK_SQL_SCRIPT"
+    exit 1
+fi
+
 echo "Checking SAP HANA instance $DB_HOST as $DB_SYSTEM to $OUTPUT_FILE ..."
 echo
 
@@ -177,10 +183,20 @@ HDBSQL_CMD="\"$HDBSQL\" -n \"$DB_HOST\" \
     -V OUTPUT_FORMAT=\"$OUTPUT_FORMAT\",SIGNAL_ERROR=\"$SIGNAL_ERROR\",SYSTEM_USER=\"$HANA_SYSTEM_USER\",SYSTEM_PASSWORD=\"$HANA_SYSTEM_USER_PASSWORD\",CHECK_APL_PASSWORD=\"$CHECK_APL_PASSWORD\" \
     -j -I \"$SQL_SCRIPT\" -A -a -F ' '"
 
+PRECHECK_CMD="\"$HDBSQL\" -n \"$DB_HOST\" \
+    -u \"$HANA_SYSTEM_USER\" \
+    -p \"$HANA_SYSTEM_USER_PASSWORD\" \
+    -V SYSTEM_USER=\"$HANA_SYSTEM_USER\",SYSTEM_PASSWORD=\"$HANA_SYSTEM_USER_PASSWORD\",CHECK_APL_PASSWORD=\"$CHECK_APL_PASSWORD\" \
+    -j -I \"$PRECHECK_SQL_SCRIPT\" -A -a -F ' '"
+
+CHECK_CONNECTION_CMD="\"$HDBSQL\" -n \"$DB_HOST\" -u \"$HANA_SYSTEM_USER\" -p \"$HANA_SYSTEM_USER_PASSWORD\" \"\""
+
 # Inject unknown/extra parameters
 if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
     for arg in "${EXTRA_ARGS[@]}"; do
         HDBSQL_CMD="$HDBSQL_CMD $arg"
+        PRECHECK_CMD="$PRECHECK_CMD $arg"
+        CHECK_CONNECTION_CMD="$CHECK_CONNECTION_CMD $arg"
     done
 fi
 
@@ -190,11 +206,46 @@ if [[ -n "$OUTPUT_FILE" && "$OUTPUT_FILE" != "stdout" ]]; then
     DISPLAY_HDBSQL_CMD="$DISPLAY_HDBSQL_CMD -o \"$OUTPUT_FILE\""
 fi
 
-if [[ "$SHOW_CMD_ONLY" -eq 1 ]]; then
-    # Mask passwords in the displayed command
+echo "Running pre-check ..."
+# Check if we can connect with provided informations
+set +e
+eval $CHECK_CONNECTION_CMD > /dev/null 2>&1
+if [[ $? -ne 0 ]]; then
+    echo "Error: Unable to connect to HANA instance $DB_HOST as user $HANA_SYSTEM_USER with the provided password (hdbsql exit code 3 - authentication error)" >&2
+    exit 3
+fi
+echo "Connection to HANA instance $DB_HOST as user $HANA_SYSTEM_USER successful."
+
+# Run the pre-check SQL (check_create_CHECK_APL_user.sql) using the exact same hdb parameters.
+# This script contains pre-checks that must pass before running check_apl.sql.
+
+set -e
+PREOUT="$(mktemp)"
+eval $PRECHECK_CMD  2>"$PREOUT"
+# Fatal: check for specific error codes in output
+if grep -q '10001' "$PREOUT"; then
+    echo "Fatal Error: pre-check detected $HANA_SYSTEM_USER user does not have 'USER ADMIN' privilege" >&2
+    rm -f "$PREOUT"
+    exit 10001
+fi
+if grep -q '10002' "$PREOUT"; then
+    echo "Fatal Error: pre-check detected provided password for temporary CHECK_APL user does not match current password policy" >&2
+    rm -f "$PREOUT"
+    exit 10002
+fi
+# Pre-check passed (no fatal errors)
+rm -f "$PREOUT"
+echo "Pre-check completed successfully. Actual check can be done"
+
+if [[ "${SHOW_CMD_ONLY:-0}" -eq 1 ]]; then
+    # Mask passwords in the displayed command and remove double quotes for an unquoted view
     DISPLAY_CMD="$DISPLAY_HDBSQL_CMD"
-    DISPLAY_CMD="${DISPLAY_CMD//\"$HANA_SYSTEM_USER_PASSWORD\"/\"****\"}"
-    DISPLAY_CMD="${DISPLAY_CMD//SYSTEM_PASSWORD=\\\"$HANA_SYSTEM_USER_PASSWORD\\\"/SYSTEM_PASSWORD=\\\"****\\\"}"
+    # Remove double quotes so the command is shown without quoted arguments (user requested)
+    DISPLAY_CMD="${DISPLAY_CMD//\"/}"
+    # Mask known passwords: DB system password and CHECK_APL password (also HANA_SYSTEM_USER_PASSWORD)
+    DISPLAY_CMD="${DISPLAY_CMD//$DB_SYSTEM_PASSWORD/****}"
+    DISPLAY_CMD="${DISPLAY_CMD//$HANA_SYSTEM_USER_PASSWORD/****}"
+    DISPLAY_CMD="${DISPLAY_CMD//$CHECK_APL_PASSWORD/****}"
     echo "Final hdbsql command:"
     echo "$DISPLAY_CMD"
     exit 0
@@ -211,4 +262,5 @@ else
     exit_code=${PIPESTATUS[0]}
 fi
 
+echo "Check completed with exit code $exit_code."
 exit $exit_code

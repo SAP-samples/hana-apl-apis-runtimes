@@ -39,6 +39,12 @@ if not exist "%SQL_SCRIPT%" (
     exit /b 1
 )
 
+set "PRECHECK_SQL_SCRIPT=%SCRIPT_DIR%check_create_CHECK_APL_user.sql"
+if not exist "%PRECHECK_SQL_SCRIPT%" (
+    echo Error: SQL script not found at "%PRECHECK_SQL_SCRIPT%"
+    exit /b 1
+)
+
 REM Default values
 set "DEFAULT_DB_HOST=hana:30015"
 set "DEFAULT_DB_USER=SYSTEM"
@@ -103,7 +109,7 @@ if "%DB_PASSWORD%"=="" (
     if "!DB_PASSWORD!"=="" set "DB_PASSWORD=%DEFAULT_DB_PASSWORD%"
 )
 if "%CHECK_APL_PASSWORD%"=="" (
-    set /p CHECK_APL_PASSWORD=Enter CHECK_APL user password; Do not forget your current password policy! [Password1]: 
+    set /p CHECK_APL_PASSWORD=Enter CHECK_APL user password; Do not forget your current password policy [Password01Password01]: 
     if "!CHECK_APL_PASSWORD!"=="" set "CHECK_APL_PASSWORD=%DEFAULT_CHECK_APL_PASSWORD%"
 )
 if "%SIGNAL_ERROR%"=="" (
@@ -138,19 +144,67 @@ if not defined HDBSQL (
     exit /b 1
 )
 
-REM Build the hdbsql command
+echo Checking SAP HANA instance %DB_HOST% as %DB_USER% to %OUTPUT_FILE% ...
+echo.
+
+REM Build the hdbsql commands
 set "HDBSQL_CMD="%HDBSQL%" -n "%DB_HOST%" -u "%DB_USER%" -p "%DB_PASSWORD%" -V OUTPUT_FORMAT=%OUTPUT_FORMAT%,SIGNAL_ERROR=%SIGNAL_ERROR%,SYSTEM_USER=%DB_USER%,SYSTEM_PASSWORD=%DB_PASSWORD%,CHECK_APL_PASSWORD=%CHECK_APL_PASSWORD% -j -I "%SQL_SCRIPT%" -A -a -F "" "" !EXTRA_ARGS!"
+
+set "PRECHECK_CMD="%HDBSQL%" -n "%DB_HOST%" -u "%DB_USER%" -p "%DB_PASSWORD%" -V SYSTEM_USER=%DB_USER%,SYSTEM_PASSWORD=%DB_PASSWORD%,CHECK_APL_PASSWORD=%CHECK_APL_PASSWORD% -j -I "%PRECHECK_SQL_SCRIPT%" -A -a -F "" "" !EXTRA_ARGS!"
+
+set "CHECK_CONNECTION_CMD="%HDBSQL%" -n "%DB_HOST%" -u "%DB_USER%" -p "%DB_PASSWORD%" "" !EXTRA_ARGS!"
 
 REM Only add >OUTPUT_FILE if not "stdout"
 if /I not "%OUTPUT_FILE%"=="stdout" (
     set "HDBSQL_CMD=%HDBSQL_CMD% > "%OUTPUT_FILE%""
 )
 
-REM Show the command only if requested, masking passwords
+echo Running pre-check ...
+REM Check if we can connect with provided information
+%CHECK_CONNECTION_CMD% >nul 2>nul
+if errorlevel 1 (
+    echo Error: Unable to connect to HANA instance %DB_HOST% as user %DB_USER% with the provided password ^(hdbsql exit code 3 - authentication error^) >&2
+    exit /b 3
+)
+echo Connection to HANA instance %DB_HOST% as user %DB_USER% successful.
+
+REM Run the pre-check SQL (check_create_CHECK_APL_user.sql) using the exact same hdb parameters.
+REM This script contains pre-checks that must pass before running check_apl.sql.
+
+REM Create temporary file for pre-check output
+set "PREOUT=%TEMP%\precheck_%RANDOM%.tmp"
+%PRECHECK_CMD% 2>"%PREOUT%"
+
+REM Fatal: check for specific error codes in output
+findstr /C:"10001" "%PREOUT%" >nul
+if not errorlevel 1 (
+    echo Fatal Error: pre-check detected %DB_USER% user does not have 'USER ADMIN' privilege >&2
+    del /f "%PREOUT%" 2>nul
+    exit /b 10001
+)
+
+findstr /C:"10002" "%PREOUT%" >nul
+if not errorlevel 1 (
+    echo Fatal Error: pre-check detected provided password for temporary CHECK_APL user does not match current password policy >&2
+    del /f "%PREOUT%" 2>nul
+    exit /b 10002
+)
+
+REM Pre-check passed (no fatal errors)
+del /f "%PREOUT%" 2>nul
+echo Pre-check completed successfully. Actual check can be done
+
 if "%SHOW_CMD_ONLY%"=="1" (
+    REM Mask passwords in the displayed command and remove double quotes for an unquoted view
     set "DISPLAY_CMD=%HDBSQL_CMD%"
+    if /I not "%OUTPUT_FILE%"=="stdout" (
+        set "DISPLAY_CMD=%DISPLAY_CMD% > "%OUTPUT_FILE%""
+    )
     setlocal enabledelayedexpansion
-    set "DISPLAY_CMD=!DISPLAY_CMD:"%DB_PASSWORD%"="****"!"
+    REM Remove double quotes so the command is shown without quoted arguments (user requested)
+    set "DISPLAY_CMD=!DISPLAY_CMD:"=!"
+    REM Mask known passwords: DB system password and CHECK_APL password
+    set "DISPLAY_CMD=!DISPLAY_CMD:%DB_PASSWORD%=****!"
     set "DISPLAY_CMD=!DISPLAY_CMD:SYSTEM_PASSWORD=%DB_PASSWORD%=SYSTEM_PASSWORD=****!"
     set "DISPLAY_CMD=!DISPLAY_CMD:CHECK_APL_PASSWORD=%CHECK_APL_PASSWORD%=CHECK_APL_PASSWORD=****!"
     echo Final hdbsql command:
@@ -159,11 +213,19 @@ if "%SHOW_CMD_ONLY%"=="1" (
     exit /b 0
 )
 
-REM Run the check
-echo Running check_apl.sql on %DB_HOST% as %DB_USER%, output to %OUTPUT_FILE% ...
-%HDBSQL_CMD%
+REM Execute the command and filter out SQL warnings containing 'HY000'
+if /I not "%OUTPUT_FILE%"=="stdout" (
+    REM Output to file: filter warnings and redirect to file
+    %HDBSQL_CMD% | findstr /V "HY000"
+    set "exit_code=!ERRORLEVEL!"
+) else (
+    REM Output to stdout: filter warnings
+    %HDBSQL_CMD% | findstr /V "HY000"
+    set "exit_code=!ERRORLEVEL!"
+)
 
-exit /b %ERRORLEVEL%
+echo Check completed with exit code !exit_code!.
+exit /b !exit_code!
 
 :show_help
 echo Usage: check_apl.bat [OPTIONS]
@@ -175,7 +237,7 @@ echo   -p ^<password^>               HANA DB user password (default: Manager1)
 echo   -f ^<format^>                 Output format: md (Markdown), raw, etc. (default: md)
 echo   -s ^<on^|off^>                Signal error in output (default: off)
 echo   -o ^<output_file^>            File path to store output (default: hana.md.txt)
-echo   --check_apl-password ^<pwd^>  Password for CHECK_APL user (default: Password1)
+echo   --check_apl-password ^<pwd^>  Password for CHECK_APL user (default: Password01Password01)
 echo   --show-cmd-only               Show the final hdbsql command and exit
 echo   --help                        Show this help message and exit
 echo When missing, the script will prompt for mandatory parameters (host,user,password) interactively.
