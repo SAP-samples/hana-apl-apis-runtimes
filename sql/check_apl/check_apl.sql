@@ -9,7 +9,7 @@
 --	 Informations about the OS and HANA instance
 --	 some standard support statements suitable for the current HANA instance
 
--- It is meant to be run by a user with high privileges (SYSTEM or DBADMIN) and will create a user CHECK_APL to actually run the checks.
+-- It is meant to be run by a user with high privileges (SYSTEM or DBADMIN) and will create a temporary user CHECK_APL to actually run the checks.
 -- This user will be dropped at the end of the script.
 
 -- This SQL script can be run only by standard SAP hdbsql command line tool available in every HANA installation
@@ -74,11 +74,11 @@ DO BEGIN
 
 		EXECUTE IMMEDIATE 'GRANT SELECT ON "_SYS_REPO"."DELIVERY_UNITS" TO CHECK_APL';
 		EXECUTE IMMEDIATE 'GRANT SELECT ON "_SYS_REPO"."ACTIVE_OBJECT" TO CHECK_APL';
-		:note_results.insert(('Some specific read-only rights have been granted to user CHECK_APL so APL''s Delivery Unit checks can be done|Information'));
+		:note_results.insert(('Some specific read-only rights have been granted to temporary user CHECK_APL so APL''s Delivery Unit checks can be done|Information'));
 	END IF;	
 	EXECUTE IMMEDIATE 'GRANT SERVICE ADMIN TO CHECK_APL';
 	EXECUTE IMMEDIATE 'GRANT MONITORING  TO CHECK_APL';
-	:note_results.insert(('SERVICE ADMIN and MONITORING rights have been granted to user CHECK_APL so scriptserver and system informations can be checked|Information'));
+	:note_results.insert(('SERVICE ADMIN and MONITORING rights have been granted to temporary user CHECK_APL so scriptserver and system informations can be checked|Information'));
 	SELECT * FROM :note_results;
 	SELECT '' FROM DUMMY;
 END;
@@ -153,7 +153,7 @@ connect CHECK_APL PASSWORD &CHECK_APL_PASSWORD;
 
 -- recreate these types so we don't depend on a successfull deployment of APL types
 
-CREATE TYPE "CHECK_RESULTS_T" AS TABLE ("KEY" NVARCHAR(256),"STATUS" NVARCHAR(256),"DETAILS" NVARCHAR(5000));
+CREATE TYPE "CHECK_RESULTS_T" AS TABLE ("KEY" NVARCHAR(256),"STATUS" NVARCHAR(1000),"DETAILS" NVARCHAR(5000));
 
 CREATE TYPE "MD_OUTPUT_T" AS TABLE ("MD_LINE" NVARCHAR(5000));
 
@@ -533,6 +533,7 @@ BEGIN
 		:known_versions.insert(('2522','172','193'));
 		:known_versions.insert(('2524','172','193'));
 		:known_versions.insert(('2602','172','193'));
+		:known_versions.insert(('2604','172','193'));
 		-- we search if the current version is a well known version
 		SELECT "VERSION","TABLES_TYPES","DU_APIS" into ref_version,ref_nb_apl_tables_types,ref_nb_apl_dus DEFAULT 'NotFound',-1,-1 FROM :known_versions WHERE "VERSION" = :du_version;
 		IF :ref_version = 'NotFound'
@@ -594,6 +595,22 @@ AS BEGIN
 	END IF;
 END;
 
+
+CREATE PROCEDURE "GET_DU_VERSION"(OUT du_version NVARCHAR(100))
+LANGUAGE SQLSCRIPT 
+SQL SECURITY INVOKER
+AS
+BEGIN
+	DECLARE is_hce BOOLEAN;
+
+	du_version = 'No DU on HCE';
+	GET_IS_HCE(is_hce);
+	IF :is_hce = FALSE
+	THEN
+		EXECUTE IMMEDIATE 'SELECT VERSION FROM "_SYS_REPO"."DELIVERY_UNITS" WHERE DELIVERY_UNIT=''HCO_PA_APL''' INTO du_version DEFAULT '';		
+	END IF;
+END;
+
 CREATE FUNCTION "CLEAN_PARSER_PROOFING"(IN input NVARCHAR(5000))
 RETURNS output NVARCHAR(5000)
 LANGUAGE SQLSCRIPT
@@ -614,6 +631,7 @@ BEGIN
 	DECLARE lcm_components "CHECK_RESULTS_T";
 	DECLARE tenant_and_users "CHECK_RESULTS_T";
 	DECLARE is_hce BOOLEAN;
+	DECLARE size_cache INTEGER DEFAULT 0;
 
 	CALL "GET_IS_HCE"(is_hce);
 	IF :is_hce = FALSE
@@ -673,8 +691,8 @@ BEGIN
 		:results.insert(('No APL function has been called since last restart','',''));
 	END IF;
 
-	procedures_cache = SELECT 'Cached SQL wrappers',"SCHEMA_NAME",CAST(COUNT(*) AS NVARCHAR) from PROCEDURES WHERE PROCEDURE_NAME LIKE 'APL!_P!_%' ESCAPE '!' GROUP BY "SCHEMA_NAME";
-	:results.insert(('subsection:','','Content of APL cache'));
+	procedures_cache = SELECT TOP 20 'Cached SQL wrappers',"SCHEMA_NAME" || ':' || "OWNER_NAME",CAST(COUNT(*) AS NVARCHAR) from PROCEDURES WHERE PROCEDURE_NAME LIKE 'APL!_P!_%' ESCAPE '!' GROUP BY "SCHEMA_NAME","OWNER_NAME" ORDER BY COUNT(*) DESC;
+	:results.insert(('subsection:','','Content of APL caches'));
 	IF NOT IS_EMPTY(:procedures_cache)
 	THEN
 		:results.insert(:procedures_cache);
@@ -688,6 +706,29 @@ BEGIN
 	ELSE
 		:results.insert(('No types detected in cache','',''));
 	END IF;
+	SELECT COUNT(DISTINCT "SCHEMA_NAME", "OWNER_NAME") into size_cache from PROCEDURES WHERE PROCEDURE_NAME LIKE 'APL!_P!_%' ESCAPE '!' ;
+	IF :size_cache >20
+	THEN
+		:results.insert(('Only first 20 combinations of (schema,owner) have been displayed' ,'','' ));
+	END IF;
+
+	:results.insert(('','','' ));
+	:results.insert(('Apl caches: ','Global statistics',''  ));
+	SELECT COUNT(DISTINCT "OWNER_NAME") INTO size_cache FROM PROCEDURES WHERE PROCEDURE_NAME LIKE 'APL!_P!_%' ESCAPE '!' AND SCHEMA_NAME='SAP_PA_APL';
+	:results.insert(('SAP_PA_APL: ','Nb distinct users using default schema for APL cache' ,:size_cache ));
+	SELECT COUNT(*) INTO size_cache FROM PROCEDURES WHERE PROCEDURE_NAME LIKE 'APL!_P!_%' ESCAPE '!' AND SCHEMA_NAME='SAP_PA_APL';
+	:results.insert(('SAP_PA_APL: ','Nb Wrappers in default schema for APL cache' ,:size_cache ));
+	SELECT COUNT(*) INTO size_cache FROM TABLES WHERE TABLE_NAME LIKE 'APL!_T!_%' ESCAPE '!' AND SCHEMA_NAME='SAP_PA_APL';
+	:results.insert(('SAP_PA_APL: ','Nb table types in default schema for APL cache' ,:size_cache ));
+
+	SELECT COUNT(*) INTO size_cache FROM PROCEDURES WHERE PROCEDURE_NAME LIKE 'APL!_P!_%' ESCAPE '!' AND SCHEMA_NAME<>'SAP_PA_APL';
+	:results.insert(('Private APL caches: ','Nb Wrappers: ' ,:size_cache ));
+	SELECT COUNT(*) INTO size_cache FROM TABLES WHERE TABLE_NAME LIKE 'APL!_T!_%' ESCAPE '!' AND SCHEMA_NAME<>'SAP_PA_APL';
+	:results.insert(('Private APL caches: ','Nb table types: ' ,:size_cache ));
+	SELECT COUNT(DISTINCT "SCHEMA_NAME") INTO size_cache FROM PROCEDURES WHERE PROCEDURE_NAME LIKE 'APL!_P!_%' ESCAPE '!' AND SCHEMA_NAME<>'SAP_PA_APL';
+	:results.insert(('Private APL caches' ,'Nb: ',:size_cache ));
+	SELECT COUNT(DISTINCT "OWNER_NAME") INTO size_cache FROM PROCEDURES WHERE PROCEDURE_NAME LIKE 'APL!_P!_%' ESCAPE '!' AND SCHEMA_NAME<>'SAP_PA_APL';
+	:results.insert(('Private APL caches','Nb distinct users: ' ,:size_cache ));
 
 	memory_usage= SELECT "SERVICE_NAME","CATEGORY",'EXCL_HEAPMEM_USED:'||TO_DECIMAL(ROUND(EXCLUSIVE_SIZE_IN_USE/(1024*1024),2),10,2)||'MB:EXCL_MAX_SINGLE_ALLOCATION_SIZE:'|| TO_DECIMAL(ROUND(EXCLUSIVE_MAX_SINGLE_ALLOCATION_SIZE/(1024*1024),2),10,2)||'MB:EXCL_PEAK_ALLOCATION_SIZE:'|| TO_DECIMAL(ROUND(EXCLUSIVE_PEAK_ALLOCATION_SIZE/(1024*1024),2),10,2)||'MB' AS "DETAILS" from "SYS"."M_HEAP_MEMORY" M,"SYS"."M_SERVICE_MEMORY" S WHERE CATEGORY IN( 'Pool/AFL_SDK/APL','Pool/malloc/libaflapl.so') AND M.PORT = S.PORT ORDER BY "SERVICE_NAME","CATEGORY";
 	:results.insert(('subsection:','','Memory usage of APL since restart'));
@@ -847,6 +888,7 @@ BEGIN
 	DECLARE expected_debrief_version NVARCHAR(1000);
 	DECLARE du_versions NVARCHAR(1000);
 	DECLARE nb INTEGER;
+	DECLARE version_apl NVARCHAR(100);
 	DECLARE du_version integer = -1;
 	DECLARE du_date DATETIME = NULL;
 	DECLARE is_hce BOOLEAN;
@@ -972,26 +1014,27 @@ BEGIN
 		CALL "GET_HAS_RIGHT_TO_OBJECT"(CURRENT_USER,'SELECT','_SYS_REPO','ACTIVE_OBJECT',has_right);
 		IF :has_right = TRUE
 		THEN
-			EXECUTE IMMEDIATE 'SELECT SUBSTR(STRING_AGG(COALESCE("DU_VERSION",''No DU version''),'',''),0,1000) AS "DU Versions",COUNT(*) AS "Nb DU Versions" FROM  (SELECT DISTINCT("DU_VERSION") FROM "_SYS_REPO"."ACTIVE_OBJECT" WHERE "DELIVERY_UNIT"=''HCO_PA_APL'' ORDER BY "DU_VERSION")' INTO du_versions,nb DEFAULT 'NO DU Version',0;
+			CALL "GET_DU_VERSION"(version_apl);
 			IF :nb >1
 			THEN
-				:results.insert(('APL APIs are coming from several APL DUs','ISSUE',:du_versions));
+				:results.insert(('Active APL APIs are coming from several APL DUs','ISSUE',:du_versions));
 			ELSE
-				:results.insert(('APL APIs are coming from one APL DU','OK',:du_versions));
-				if :du_versions <> :du_version
+				:results.insert(('Active APL APIs are coming from one APL DU','OK',:du_versions));
+				SELECT "VALUE" into version_apl DEFAULT '' FROM "M_PLUGIN_MANIFESTS" WHERE "PLUGIN_NAME"='SAP_AFL_SDK_APL' AND "KEY"='rev-number';
+				if :version_apl <> :du_version
 				THEN
 					IF du_version <> -1
 					THEN
-						:results.insert(('APL APIs is not coming from expected APL DU','ISSUE',:du_versions || '<>' || du_version));
+						:results.insert(('Active APL APIs are not coming from expected APL DU','ISSUE',:version_apl || '<>' || du_version || ' Incomplete downgrade from APL ' || :du_version || ' to APL ' || :version_apl ||' ???'));
 					ELSE
-						:results.insert(('Cannot check APL APIs are coming from expected APL DU','WARNING',:du_versions || '<>' || du_version));
+						:results.insert(('Cannot check Active APL APIs are coming from expected APL DU','WARNING',:du_versions || '<>' || du_version));
 					END IF;
 				ELSE
-					:results.insert(('APL APIs is coming from expected APL DU','OK',:du_versions || '=' || du_version));
+					:results.insert(('Active APL APIs is coming from expected APL DU','OK',:du_versions || '=' || du_version));
 				END IF;
 			END IF;
 		ELSE
-			:results.insert(('Cannot check APL APIs are coming from unique APL DU','WARNING','Please execute: GRANT SELECT ON "_SYS_REPO"."ACTIVE_OBJECT" TO ' || CURRENT_USER));
+			:results.insert(('Cannot check Active APL APIs are coming from unique APL DU','WARNING','Please execute: GRANT SELECT ON "_SYS_REPO"."ACTIVE_OBJECT" TO ' || CURRENT_USER));
 		END IF;
 	END IF;
 	IF :is_hce = FALSE
@@ -1406,20 +1449,6 @@ BEGIN
 END;
 
 
-CREATE PROCEDURE "GET_DU_VERSION"(OUT du_version NVARCHAR(100))
-LANGUAGE SQLSCRIPT 
-SQL SECURITY INVOKER
-AS
-BEGIN
-	DECLARE is_hce BOOLEAN;
-
-	du_version = '';
-	GET_IS_HCE(is_hce);
-	IF :is_hce = FALSE
-	THEN
-		EXECUTE IMMEDIATE 'SELECT VERSION FROM "_SYS_REPO"."DELIVERY_UNITS" WHERE DELIVERY_UNIT=''HCO_PA_APL''' INTO du_version DEFAULT '';		
-	END IF;
-END;
 
 CREATE PROCEDURE "CHECK_UNINSTALL"(OUT results "CHECK_RESULTS_T")
 LANGUAGE SQLSCRIPT 
