@@ -50,7 +50,7 @@ public class Mapper {
 		mIndices = new int[ iKxJModelNames.length ];
 		TreeMap lDataSourceNamesMap = new TreeMap();
 		for( int i=0; i < iDataSourceNames.length ; i++ ) {
-			lDataSourceNamesMap.put( iDataSourceNames[i], new Integer(i) );
+			lDataSourceNamesMap.put( iDataSourceNames[i], i );
 		}
 		for( int i=0; i<iKxJModelNames.length; i++ ) {
 			if (iKxJModelNames[i] != null) {
