@@ -9,8 +9,8 @@
 // ----------------------------------------------------------------------------
 
 
-#ifndef _KXCPPRTMODELMANAGER_H
-#define _KXCPPRTMODELMANAGER_H 1
+#ifndef KXCPPRTMODELMANAGER_H
+#define KXCPPRTMODELMANAGER_H 1
 
 #include "KxCppRTModel.h"
 

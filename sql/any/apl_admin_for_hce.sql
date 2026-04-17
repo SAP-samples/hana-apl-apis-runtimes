@@ -60,5 +60,3 @@ connect USER_APL password Password1;
 -- Check granted role with USER_APL
 call "SAP_PA_APL"."sap.pa.apl.base::PING"(?);
 
--- Purge the cache (hence the '1' parameter, where as '0' would simply browse the cache) 
-call "SAP_PA_APL"."sap.pa.apl.base::CLEANUP"(1,?);

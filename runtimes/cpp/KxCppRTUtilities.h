@@ -9,8 +9,8 @@
  * ----------------------------------------------------------------------------
  */
 
-#ifndef _cKXCPPRTUTILITIES_H
-#define _cKXCPPRTUTILITIES_H 1
+#ifndef cKXCPPRTUTILITIES_H
+#define cKXCPPRTUTILITIES_H 1
 
 #include "Config.h"
 

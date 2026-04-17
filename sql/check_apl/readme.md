@@ -44,8 +44,8 @@ If any required parameter is missing, the script will prompt you interactively.
 
 - `-f` or `--format <format>` : Output format (`md` for Markdown, `raw`, etc. Default: `md`)
 - `-s` or `--signal-error <on|off>` : Signal error in output (Default: `off`)
-- `--check_apl-password <password>` : Password for the temporary CHECK_APL user (Default: 
-`Password1`)
+- `--use-ssl <on|off>` : Use SSL for connection (Default: `on`)
+- `--check_apl-password <password>` : Password for the temporary CHECK_APL user (Default: `Password01Password01`)
 - `--show-cmd-only` : Show only the final command line used to run the script and exit
 - `--help` : Show help message and exit
 

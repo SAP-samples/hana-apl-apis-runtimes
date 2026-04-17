@@ -534,6 +534,8 @@ BEGIN
 		:known_versions.insert(('2524','172','193'));
 		:known_versions.insert(('2602','172','193'));
 		:known_versions.insert(('2604','172','193'));
+		:known_versions.insert(('2606','172','193'));
+		:known_versions.insert(('2610','172','197'));
 		-- we search if the current version is a well known version
 		SELECT "VERSION","TABLES_TYPES","DU_APIS" into ref_version,ref_nb_apl_tables_types,ref_nb_apl_dus DEFAULT 'NotFound',-1,-1 FROM :known_versions WHERE "VERSION" = :du_version;
 		IF :ref_version = 'NotFound'

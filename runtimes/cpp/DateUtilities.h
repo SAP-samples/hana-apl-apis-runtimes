@@ -9,8 +9,8 @@
  * ----------------------------------------------------------------------------
  */
 
-#ifndef _cKXDATEUTIL_H
-#define _cKXDATEUTIL_H 1
+#ifndef cKXDATEUTIL_H
+#define cKXDATEUTIL_H 1
 
 #include "Config.h"
 

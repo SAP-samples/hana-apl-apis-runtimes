@@ -10,8 +10,8 @@
  */
 
 
-#ifndef _cKXCPPRTMODEL_H
-#define _cKXCPPRTMODEL_H 1
+#ifndef cKXCPPRTMODEL_H
+#define cKXCPPRTMODEL_H 1
 
 #include "Config.h"
 #include "KxCppRTValue.h"

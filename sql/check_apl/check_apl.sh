@@ -15,6 +15,7 @@
 #   -p, --password <password>           HANA DB user password (default: Manager1)
 #   -f, --format <format>               Output format: md (Markdown), raw, etc. (default: md)
 #   -s, --signal-error <on|off>         Signal error in output (default: off)
+#   --use-ssl <on|off>                  Use SSL for connection (default: on)
 #   --check_apl-password <password>     Password for CHECK_APL user (default: Password01Password01)
 #   --help                              Show this help message and exit
 #  When missing, the script will prompt for mandatory parameters (host,user,password) interactively.
@@ -36,6 +37,7 @@ DEFAULT_DB_SYSTEM="SYSTEM"
 DEFAULT_DB_SYSTEM_PASSWORD="Manager1"
 DEFAULT_OUTPUT_FORMAT="md"
 DEFAULT_SIGNAL_ERROR="off"
+DEFAULT_USE_SSL="on"
 DEFAULT_CHECK_APL_PASSWORD="Password01Password01"
 DEFAULT_OUTPUT_FILE="hana.md.txt"
 OUTPUT_FILE=""
@@ -51,6 +53,7 @@ Options:
   -f, --format <format>                 Output format (default: $DEFAULT_OUTPUT_FORMAT)
   -s, --signal-error <on|off>           Signal error in output (default: $DEFAULT_SIGNAL_ERROR)
   -o <output_file>                      File path to store output (default: $DEFAULT_OUTPUT_FILE)
+  --use-ssl <on|off>                    Use SSL for connection (default: $DEFAULT_USE_SSL)
   --check_apl-password <password>       Password for CHECK_APL user (default: $DEFAULT_CHECK_APL_PASSWORD)
   --show-cmd-only                       Show the final hdbsql command and exit
   --help                                Show this help message and exit
@@ -92,6 +95,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -o)
             OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        --use-ssl)
+            USE_SSL="$2"
             shift 2
             ;;
         --check_apl-password)
@@ -137,6 +144,9 @@ fi
 if [[ -z "$SIGNAL_ERROR" ]]; then
     SIGNAL_ERROR="$DEFAULT_SIGNAL_ERROR"
 fi
+if [[ -z "$USE_SSL" ]]; then
+    USE_SSL="$DEFAULT_USE_SSL"
+fi
 if [[ -z "$OUTPUT_FILE" ]]; then
     read -rp "Enter output file path (use 'stdout' for results on console: $DEFAULT_OUTPUT_FILE): " OUTPUT_FILE
     OUTPUT_FILE=${OUTPUT_FILE:-$DEFAULT_OUTPUT_FILE}
@@ -177,19 +187,25 @@ fi
 echo "Checking SAP HANA instance $DB_HOST as $DB_SYSTEM to $OUTPUT_FILE ..."
 echo
 
-HDBSQL_CMD="\"$HDBSQL\" -n \"$DB_HOST\" \
+# Build SSL options if enabled
+SSL_OPTS=""
+if [[ "$USE_SSL" == "on" ]]; then
+    SSL_OPTS="-e -ssltrustcert"
+fi
+
+HDBSQL_CMD="\"$HDBSQL\" -n \"$DB_HOST\" $SSL_OPTS \
     -u \"$HANA_SYSTEM_USER\" \
     -p \"$HANA_SYSTEM_USER_PASSWORD\" \
     -V OUTPUT_FORMAT=\"$OUTPUT_FORMAT\",SIGNAL_ERROR=\"$SIGNAL_ERROR\",SYSTEM_USER=\"$HANA_SYSTEM_USER\",SYSTEM_PASSWORD=\"$HANA_SYSTEM_USER_PASSWORD\",CHECK_APL_PASSWORD=\"$CHECK_APL_PASSWORD\" \
     -j -I \"$SQL_SCRIPT\" -A -a -F ' '"
 
-PRECHECK_CMD="\"$HDBSQL\" -n \"$DB_HOST\" \
+PRECHECK_CMD="\"$HDBSQL\" -n \"$DB_HOST\" $SSL_OPTS \
     -u \"$HANA_SYSTEM_USER\" \
     -p \"$HANA_SYSTEM_USER_PASSWORD\" \
     -V SYSTEM_USER=\"$HANA_SYSTEM_USER\",SYSTEM_PASSWORD=\"$HANA_SYSTEM_USER_PASSWORD\",CHECK_APL_PASSWORD=\"$CHECK_APL_PASSWORD\" \
     -j -I \"$PRECHECK_SQL_SCRIPT\" -A -a -F ' '"
 
-CHECK_CONNECTION_CMD="\"$HDBSQL\" -n \"$DB_HOST\" -u \"$HANA_SYSTEM_USER\" -p \"$HANA_SYSTEM_USER_PASSWORD\" \"\""
+CHECK_CONNECTION_CMD="\"$HDBSQL\" -n \"$DB_HOST\" $SSL_OPTS -u \"$HANA_SYSTEM_USER\" -p \"$HANA_SYSTEM_USER_PASSWORD\" \"\""
 
 # Inject unknown/extra parameters
 if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
@@ -204,6 +220,28 @@ fi
 DISPLAY_HDBSQL_CMD="$HDBSQL_CMD"
 if [[ -n "$OUTPUT_FILE" && "$OUTPUT_FILE" != "stdout" ]]; then
     DISPLAY_HDBSQL_CMD="$DISPLAY_HDBSQL_CMD -o \"$OUTPUT_FILE\""
+fi
+
+if [[ "${SHOW_CMD_ONLY:-0}" -eq 1 ]]; then
+    # Display commands only mode - show both precheck and final commands
+    DISPLAY_CMD="$DISPLAY_HDBSQL_CMD"
+    # Remove double quotes so the command is shown without quoted arguments (user requested)
+    DISPLAY_CMD="${DISPLAY_CMD//\"/}"
+    # Mask known passwords: DB system password and CHECK_APL password (also HANA_SYSTEM_USER_PASSWORD)
+    DISPLAY_CMD="${DISPLAY_CMD//$DB_SYSTEM_PASSWORD/****}"
+    DISPLAY_CMD="${DISPLAY_CMD//$HANA_SYSTEM_USER_PASSWORD/****}"
+    DISPLAY_CMD="${DISPLAY_CMD//$CHECK_APL_PASSWORD/****}"
+    echo "Precheck hdbsql command:"
+    PRECHECK_DISPLAY_CMD="$PRECHECK_CMD"
+    PRECHECK_DISPLAY_CMD="${PRECHECK_DISPLAY_CMD//\"/}"
+    PRECHECK_DISPLAY_CMD="${PRECHECK_DISPLAY_CMD//$DB_SYSTEM_PASSWORD/****}"
+    PRECHECK_DISPLAY_CMD="${PRECHECK_DISPLAY_CMD//$HANA_SYSTEM_USER_PASSWORD/****}"
+    PRECHECK_DISPLAY_CMD="${PRECHECK_DISPLAY_CMD//$CHECK_APL_PASSWORD/****}"
+    echo "$PRECHECK_DISPLAY_CMD"
+    echo
+    echo "Final hdbsql command:"
+    echo "$DISPLAY_CMD"
+    exit 0
 fi
 
 echo "Running pre-check ..."
@@ -236,20 +274,6 @@ fi
 # Pre-check passed (no fatal errors)
 rm -f "$PREOUT"
 echo "Pre-check completed successfully. Actual check can be done"
-
-if [[ "${SHOW_CMD_ONLY:-0}" -eq 1 ]]; then
-    # Mask passwords in the displayed command and remove double quotes for an unquoted view
-    DISPLAY_CMD="$DISPLAY_HDBSQL_CMD"
-    # Remove double quotes so the command is shown without quoted arguments (user requested)
-    DISPLAY_CMD="${DISPLAY_CMD//\"/}"
-    # Mask known passwords: DB system password and CHECK_APL password (also HANA_SYSTEM_USER_PASSWORD)
-    DISPLAY_CMD="${DISPLAY_CMD//$DB_SYSTEM_PASSWORD/****}"
-    DISPLAY_CMD="${DISPLAY_CMD//$HANA_SYSTEM_USER_PASSWORD/****}"
-    DISPLAY_CMD="${DISPLAY_CMD//$CHECK_APL_PASSWORD/****}"
-    echo "Final hdbsql command:"
-    echo "$DISPLAY_CMD"
-    exit 0
-fi
 
 # Execute the command and filter out SQL warnings containing 'HY000'
 if [[ -n "$OUTPUT_FILE" && "$OUTPUT_FILE" != "stdout" ]]; then

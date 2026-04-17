@@ -9,8 +9,8 @@
  * ----------------------------------------------------------------------------
  */
 
-#ifndef _KXCPPRTVALUE_H
-#define _KXCPPRTVALUE_H 1
+#ifndef KXCPPRTVALUE_H
+#define KXCPPRTVALUE_H 1
 
 #include "Config.h"
 

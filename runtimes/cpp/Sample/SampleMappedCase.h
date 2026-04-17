@@ -8,8 +8,8 @@
 // Description..: Simple implementation of iKxCase for library Sample
 // ----------------------------------------------------------------------------
 
-#ifndef _SAMPLEMAPPEDCASE_
-#define _SAMPLEMAPPEDCASE_H 1
+#ifndef SAMPLEMAPPEDCASE_H
+#define SAMPLEMAPPEDCASE_H 1
 
 #include "KxCppRTModel.h"
 

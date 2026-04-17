@@ -16,6 +16,7 @@ REM   -p <password>               HANA DB user password (default: Manager1)
 REM   -f <format>                 Output format: md (Markdown), raw, etc. (default: md)
 REM   -s <on|off>                 Signal error in output (default: off)
 REM   -o <output_file>            File path to store output (default: hana.md.txt)
+REM   --use-ssl <on|off>          Use SSL for connection (default: on)
 REM   --check_apl-password <pwd>  Password for CHECK_APL user (default: Password01Password01)
 REM   --show-cmd-only             Show the final hdbsql command and exit
 REM   --help                      Show this help message and exit
@@ -51,6 +52,7 @@ set "DEFAULT_DB_USER=SYSTEM"
 set "DEFAULT_DB_PASSWORD=Manager1"
 set "DEFAULT_OUTPUT_FORMAT=md"
 set "DEFAULT_SIGNAL_ERROR=off"
+set "DEFAULT_USE_SSL=on"
 set "DEFAULT_CHECK_APL_PASSWORD=Password01Password01"
 set "DEFAULT_OUTPUT_FILE=hana.md.txt"
 set "OUTPUT_FILE="
@@ -79,6 +81,9 @@ if "%~1"=="-h" (
     shift
 ) else if "%~1"=="-o" (
     set "OUTPUT_FILE=%~2"
+    shift
+) else if "%~1"=="--use-ssl" (
+    set "USE_SSL=%~2"
     shift
 ) else if "%~1"=="--check_apl-password" (
     set "CHECK_APL_PASSWORD=%~2"
@@ -115,6 +120,9 @@ if "%CHECK_APL_PASSWORD%"=="" (
 if "%SIGNAL_ERROR%"=="" (
     set "SIGNAL_ERROR=%DEFAULT_SIGNAL_ERROR%"
 )
+if "%USE_SSL%"=="" (
+    set "USE_SSL=%DEFAULT_USE_SSL%"
+)
 if "%OUTPUT_FORMAT%"=="" (
     set "OUTPUT_FORMAT=%DEFAULT_OUTPUT_FORMAT%"
 )
@@ -147,16 +155,48 @@ if not defined HDBSQL (
 echo Checking SAP HANA instance %DB_HOST% as %DB_USER% to %OUTPUT_FILE% ...
 echo.
 
+REM Build SSL options if enabled
+set "SSL_OPTS="
+if /I "%USE_SSL%"=="on" (
+    set "SSL_OPTS=-e -sstrustcert"
+)
+
 REM Build the hdbsql commands
-set "HDBSQL_CMD="%HDBSQL%" -n "%DB_HOST%" -u "%DB_USER%" -p "%DB_PASSWORD%" -V OUTPUT_FORMAT=%OUTPUT_FORMAT%,SIGNAL_ERROR=%SIGNAL_ERROR%,SYSTEM_USER=%DB_USER%,SYSTEM_PASSWORD=%DB_PASSWORD%,CHECK_APL_PASSWORD=%CHECK_APL_PASSWORD% -j -I "%SQL_SCRIPT%" -A -a -F "" "" !EXTRA_ARGS!"
+set "HDBSQL_CMD="%HDBSQL%" -n "%DB_HOST%" %SSL_OPTS% -u "%DB_USER%" -p "%DB_PASSWORD%" -V OUTPUT_FORMAT=%OUTPUT_FORMAT%,SIGNAL_ERROR=%SIGNAL_ERROR%,SYSTEM_USER=%DB_USER%,SYSTEM_PASSWORD=%DB_PASSWORD%,CHECK_APL_PASSWORD=%CHECK_APL_PASSWORD% -j -I "%SQL_SCRIPT%" -A -a -F "" "" !EXTRA_ARGS!"
 
-set "PRECHECK_CMD="%HDBSQL%" -n "%DB_HOST%" -u "%DB_USER%" -p "%DB_PASSWORD%" -V SYSTEM_USER=%DB_USER%,SYSTEM_PASSWORD=%DB_PASSWORD%,CHECK_APL_PASSWORD=%CHECK_APL_PASSWORD% -j -I "%PRECHECK_SQL_SCRIPT%" -A -a -F "" "" !EXTRA_ARGS!"
+set "PRECHECK_CMD="%HDBSQL%" -n "%DB_HOST%" %SSL_OPTS% -u "%DB_USER%" -p "%DB_PASSWORD%" -V SYSTEM_USER=%DB_USER%,SYSTEM_PASSWORD=%DB_PASSWORD%,CHECK_APL_PASSWORD=%CHECK_APL_PASSWORD% -j -I "%PRECHECK_SQL_SCRIPT%" -A -a -F "" "" !EXTRA_ARGS!"
 
-set "CHECK_CONNECTION_CMD="%HDBSQL%" -n "%DB_HOST%" -u "%DB_USER%" -p "%DB_PASSWORD%" "" !EXTRA_ARGS!"
+set "CHECK_CONNECTION_CMD="%HDBSQL%" -n "%DB_HOST%" %SSL_OPTS% -u "%DB_USER%" -p "%DB_PASSWORD%" "" !EXTRA_ARGS!"
 
 REM Only add >OUTPUT_FILE if not "stdout"
 if /I not "%OUTPUT_FILE%"=="stdout" (
     set "HDBSQL_CMD=%HDBSQL_CMD% > "%OUTPUT_FILE%""
+)
+
+if "%SHOW_CMD_ONLY%"=="1" (
+    REM Mask passwords in the displayed command and remove double quotes for an unquoted view
+    set "DISPLAY_CMD=%HDBSQL_CMD%"
+    if /I not "%OUTPUT_FILE%"=="stdout" (
+        set "DISPLAY_CMD=%DISPLAY_CMD% > "%OUTPUT_FILE%""
+    )
+    setlocal enabledelayedexpansion
+    REM Remove double quotes so the command is shown without quoted arguments (user requested)
+    set "DISPLAY_CMD=!DISPLAY_CMD:"=!"
+    REM Mask known passwords: DB system password and CHECK_APL password
+    set "DISPLAY_CMD=!DISPLAY_CMD:%DB_PASSWORD%=****!"
+    set "DISPLAY_CMD=!DISPLAY_CMD:SYSTEM_PASSWORD=%DB_PASSWORD%=SYSTEM_PASSWORD=****!"
+    set "DISPLAY_CMD=!DISPLAY_CMD:CHECK_APL_PASSWORD=%CHECK_APL_PASSWORD%=CHECK_APL_PASSWORD=****!"
+    echo Precheck hdbsql command:
+    set "PRECHECK_DISPLAY_CMD=%PRECHECK_CMD:"=!"
+    set "PRECHECK_DISPLAY_CMD=!PRECHECK_DISPLAY_CMD:%DB_PASSWORD%=****!"
+    set "PRECHECK_DISPLAY_CMD=!PRECHECK_DISPLAY_CMD:SYSTEM_PASSWORD=%DB_PASSWORD%=SYSTEM_PASSWORD=****!"
+    set "PRECHECK_DISPLAY_CMD=!PRECHECK_DISPLAY_CMD:CHECK_APL_PASSWORD=%CHECK_APL_PASSWORD%=CHECK_APL_PASSWORD=****!"
+    echo !PRECHECK_DISPLAY_CMD!
+    echo.
+    echo Final hdbsql command:
+    echo !DISPLAY_CMD!
+    endlocal
+    exit /b 0
 )
 
 echo Running pre-check ...
@@ -194,25 +234,6 @@ REM Pre-check passed (no fatal errors)
 del /f "%PREOUT%" 2>nul
 echo Pre-check completed successfully. Actual check can be done
 
-if "%SHOW_CMD_ONLY%"=="1" (
-    REM Mask passwords in the displayed command and remove double quotes for an unquoted view
-    set "DISPLAY_CMD=%HDBSQL_CMD%"
-    if /I not "%OUTPUT_FILE%"=="stdout" (
-        set "DISPLAY_CMD=%DISPLAY_CMD% > "%OUTPUT_FILE%""
-    )
-    setlocal enabledelayedexpansion
-    REM Remove double quotes so the command is shown without quoted arguments (user requested)
-    set "DISPLAY_CMD=!DISPLAY_CMD:"=!"
-    REM Mask known passwords: DB system password and CHECK_APL password
-    set "DISPLAY_CMD=!DISPLAY_CMD:%DB_PASSWORD%=****!"
-    set "DISPLAY_CMD=!DISPLAY_CMD:SYSTEM_PASSWORD=%DB_PASSWORD%=SYSTEM_PASSWORD=****!"
-    set "DISPLAY_CMD=!DISPLAY_CMD:CHECK_APL_PASSWORD=%CHECK_APL_PASSWORD%=CHECK_APL_PASSWORD=****!"
-    echo Final hdbsql command:
-    echo !DISPLAY_CMD!
-    endlocal
-    exit /b 0
-)
-
 REM Execute the command and filter out SQL warnings containing 'HY000'
 if /I not "%OUTPUT_FILE%"=="stdout" (
     REM Output to file: filter warnings and redirect to file
@@ -237,6 +258,7 @@ echo   -p ^<password^>               HANA DB user password (default: Manager1)
 echo   -f ^<format^>                 Output format: md (Markdown), raw, etc. (default: md)
 echo   -s ^<on^|off^>                Signal error in output (default: off)
 echo   -o ^<output_file^>            File path to store output (default: hana.md.txt)
+echo   --use-ssl ^<on^|off^>         Use SSL for connection (default: on)
 echo   --check_apl-password ^<pwd^>  Password for CHECK_APL user (default: Password01Password01)
 echo   --show-cmd-only               Show the final hdbsql command and exit
 echo   --help                        Show this help message and exit

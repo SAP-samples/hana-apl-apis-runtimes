@@ -10,8 +10,8 @@
  */
 
 
-#ifndef _CONFIG_H
-#define _CONFIG_H 1
+#ifndef CONFIG_H
+#define CONFIG_H 1
 
 #if defined(_WIN32)
 // Added some pragma to remove strange warning that appear
