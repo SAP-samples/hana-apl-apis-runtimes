@@ -19,13 +19,13 @@ void KxStringTrim (const char* iWord, size_t iLeft, size_t iLength, const char* 
     if (iLength > 0)
     {
         *(oLength) = 0;
-        while ((NULL != (void*)strchr (iSeparators, iWord[lIndex])) && (lIndex < iLeft + iLength))
+        while ((lIndex < iLeft + iLength) && (NULL != (void*)strchr (iSeparators, iWord[lIndex])))
         {
             lIndex++;
         }
         *(oLeft) = lIndex;
         lIndex = iLeft + iLength - 1;
-        while ((NULL != (void*)strrchr (iSeparators, iWord[lIndex])) && (lIndex > *(oLeft)))
+        while ((lIndex > *(oLeft)) && (NULL != (void*)strrchr (iSeparators, iWord[lIndex])))
         {
             lIndex--;
         }
@@ -42,19 +42,12 @@ long KxStringTokenSTL (const char* iLine, size_t iLeft, const char* iSeparators,
 {
     size_t lLength = strlen (iLine + iLeft);
 
-    if (0 <= lLength)
-    {
-        /* I want to stop at the first char in separator list */
-        *(oLength) = strcspn (iLine + iLeft, iSeparators);
-        if (*(oLength) < lLength)
-            return (KXEN_S_OK);
-        else
-            return (KXEN_S_FALSE);
-    }
+    /* I want to stop at the first char in separator list */
+    *(oLength) = strcspn (iLine + iLeft, iSeparators);
+    if (*(oLength) < lLength)
+        return (KXEN_S_OK);
     else
-    {
-        return (KXEN_E_INVALIDARG);
-    }
+        return (KXEN_S_FALSE);
 }
 
 long KxStringSplitNoDupSTL (KxSTL::vector<KxSTL::string>& oWords, KxSTL::string iLine,
