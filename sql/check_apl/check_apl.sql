@@ -177,6 +177,7 @@ AS BEGIN
 END;
 
 
+
 CREATE PROCEDURE "OUTPUT_AS_MD_3_FIELDS"(
 	IN res CHECK_RESULTS_T,
 	OUT md_output MD_OUTPUT_T
@@ -186,6 +187,8 @@ SQL SECURITY INVOKER
 AS BEGIN
 	DECLARE TOC MD_OUTPUT_T;
 	DECLARE Content_md MD_OUTPUT_T;
+	DECLARE details_as_code BOOLEAN DEFAULT FALSE;
+	DECLARE key_md NVARCHAR(5000);
 	DECLARE CURSOR cur FOR SELECT "KEY", "STATUS", "DETAILS" FROM :res WHERE "KEY" NOT LIKE '!_!_%' ESCAPE '!';
 
 	FOR cur_row AS cur DO
@@ -195,18 +198,18 @@ AS BEGIN
 		END IF;
 		IF cur_row.KEY = 'title:'
 		THEN
+			details_as_code := FALSE;
 			:Content_md.insert(('## ' ||:cur_row.DETAILS));
 			:TOC.insert(('- ['||:cur_row.DETAILS||'](#'||LOWER(REPLACE(:cur_row.DETAILS,' ','-'))||')'));
 			continue;
 		END IF;
 		IF cur_row.KEY = 'table:'
 		THEN
+			details_as_code := FALSE;
 			IF cur_row.STATUS = ''
 			THEN
-				-- no specific header, we use the default one
 				:Content_md.insert(('| | | |'));
 			ELSE
-				-- status contains specific header
 				:Content_md.insert((cur_row.STATUS));
 			END IF;
 			:Content_md.insert((REPLACE('|___|___|___|','_','-')));
@@ -214,27 +217,42 @@ AS BEGIN
 		END IF;
 		IF cur_row.KEY = 'section:'
 		THEN
+			details_as_code := FALSE;
 			:Content_md.insert(('### ' ||:cur_row.DETAILS));
 			:TOC.insert(('    - ['||:cur_row.DETAILS||'](#'||LOWER(REPLACE(:cur_row.DETAILS,' ','-'))||')'));
 			continue;
 		END IF;
 		IF cur_row.KEY = 'subsection:'
 		THEN
+			IF cur_row.STATUS = 'code'
+			THEN
+				details_as_code := TRUE;
+			ELSE
+				details_as_code := FALSE;
+			END IF;
 			:Content_md.insert(('#### ' ||:cur_row.DETAILS));
 			:TOC.insert(('        - ['||:cur_row.DETAILS||'](#'||LOWER(REPLACE(:cur_row.DETAILS,' ','-'))||')'));
-			-- subsection is always followed by a table
-			IF cur_row.STATUS = ''
+			IF cur_row.STATUS = '' OR :details_as_code = TRUE
 			THEN
-				-- no specific header, we use the default one
 				:Content_md.insert(('| | | |'));
 			ELSE
-				-- status contains specific header
 				:Content_md.insert((cur_row.STATUS));
 			END IF;
 			:Content_md.insert((REPLACE('|___|___|___|','_','-')));
 			continue;
 		ELSE
-			:Content_md.insert(('|' || "FILTER_SPECIAL_MD_CHARS"(cur_row.KEY) || '|' ||"FILTER_SPECIAL_MD_CHARS"(cur_row.STATUS) || '|' || "FILTER_SPECIAL_MD_CHARS"(cur_row.DETAILS) || '|'));
+			IF UPPER(COALESCE(cur_row.KEY,'')) LIKE '%DANGER ZONE%'
+			THEN
+				key_md := '<span style="color:red">**' || "FILTER_SPECIAL_MD_CHARS"(cur_row.KEY) || '**</span>';
+			ELSE
+				key_md := "FILTER_SPECIAL_MD_CHARS"(cur_row.KEY);
+			END IF;
+			IF :details_as_code = TRUE
+			THEN
+				:Content_md.insert(('|' || :key_md || '|' ||"FILTER_SPECIAL_MD_CHARS"(cur_row.STATUS) || '|`' || REPLACE(COALESCE(cur_row.DETAILS,''),'`','` `') || '`|'));
+			ELSE
+				:Content_md.insert(('|' || :key_md || '|' ||"FILTER_SPECIAL_MD_CHARS"(cur_row.STATUS) || '|' || "FILTER_SPECIAL_MD_CHARS"(cur_row.DETAILS) || '|'));
+			END IF;
 		END IF;
 	END FOR;
 	:md_output.insert(:TOC);
@@ -466,13 +484,6 @@ BEGIN
 END;
 
 
--- This type is not an APL type but is used in the check
-
-CREATE TYPE "apl_check:KNOWN_VERSION_TABLES_TYPES_APIS" AS TABLE (
-	"VERSION" NVARCHAR(100),
-	"TABLES_TYPES" INTEGER,
-	"DU_APIS" INTEGER);
-
 CREATE PROCEDURE "CHECK_APIS"(IN du_version INTEGER,OUT results "CHECK_RESULTS_T")
 LANGUAGE SQLSCRIPT 
 SQL SECURITY INVOKER
@@ -480,7 +491,6 @@ AS
 BEGIN
 	DECLARE nb_apl_tables_types INTEGER;
 	DECLARE nb_apl_du_apis INTEGER;
-	DECLARE known_versions "apl_check:KNOWN_VERSION_TABLES_TYPES_APIS";
     DECLARE ref_version NVARCHAR(100);
 	DECLARE ref_nb_apl_tables_types INTEGER;
 	DECLARE ref_nb_apl_dus INTEGER;
@@ -490,115 +500,29 @@ BEGIN
 	
 	if :du_version=-1
 	THEN
-		:results.insert(('This is an HCE version of APL','','there is no potential issue on du packaging to check'));
-		:results.insert(('# of APL tables and types','',:nb_apl_tables_types || ' to be checked'));
-		:results.insert(('# of SQL APL APIS','',:nb_apl_du_apis || ' to be checked'));
+		:results.insert(('This is an HCE version of APL','',''));
 	ELSE
-		-- we build manually a partial list of known version of APL
-		:known_versions.insert(('1901','104','73'));
-		:known_versions.insert(('1904','88','73'));
-		:known_versions.insert(('2006','88','74'));
-		:known_versions.insert(('2113','167','150'));
-		:known_versions.insert(('2123','170','154'));
-		:known_versions.insert(('2203','170','154'));
-		:known_versions.insert(('2225','185','170'));
-		:known_versions.insert(('2303','185','170'));
-		:known_versions.insert(('2307','186','171'));
-		:known_versions.insert(('2309','188','174'));
-		:known_versions.insert(('2311','190','176'));
-		:known_versions.insert(('2313','190','176'));
-		:known_versions.insert(('2321','190','176'));
-		:known_versions.insert(('2325','137','183'));
-		:known_versions.insert(('2402','164','183'));
-		:known_versions.insert(('2403','164','183'));
-		:known_versions.insert(('2405','164','183'));
-		:known_versions.insert(('2407','164','183'));
-		:known_versions.insert(('2409','164','184'));
-		:known_versions.insert(('2411','164','184'));
-		:known_versions.insert(('2413','164','184'));
-		:known_versions.insert(('2415','164','184'));
-		:known_versions.insert(('2419','164','184'));
-		:known_versions.insert(('2421','164','184'));
-		:known_versions.insert(('2423','164','184'));
-		:known_versions.insert(('2425','171','192'));
-		:known_versions.insert(('2502','171','192'));
-		:known_versions.insert(('2504','171','192'));
-		:known_versions.insert(('2506','171','192'));
-		:known_versions.insert(('2508','171','192'));
-		:known_versions.insert(('2510','171','192'));
-		:known_versions.insert(('2512','171','192'));
-		:known_versions.insert(('2514','172','193'));
-		:known_versions.insert(('2516','172','193'));
-		:known_versions.insert(('2520','172','193'));
-		:known_versions.insert(('2522','172','193'));
-		:known_versions.insert(('2524','172','193'));
-		:known_versions.insert(('2602','172','193'));
-		:known_versions.insert(('2604','172','193'));
-		:known_versions.insert(('2606','172','193'));
-		:known_versions.insert(('2610','172','197'));
-		:known_versions.insert(('2612','172','197'));
-		:known_versions.insert(('2614','172','197'));
-		-- we search if the current version is a well known version
-		SELECT "VERSION","TABLES_TYPES","DU_APIS" into ref_version,ref_nb_apl_tables_types,ref_nb_apl_dus DEFAULT 'NotFound',-1,-1 FROM :known_versions WHERE "VERSION" = :du_version;
-		IF :ref_version = 'NotFound'
+		:results.insert(('This is an On Premise version of APL','',:du_version));
+	END IF;
+	:results.insert(('# of APL tables and types','',:nb_apl_tables_types || ' to check'));
+	:results.insert(('# of SQL APL APIS','',:nb_apl_du_apis || ' to check'));
+	IF :du_version=-1
+	THEN
+		:results.insert(('This is a HANA Cloud version of APL','WARNING','Looks like OK but you need to check the # of APL tables and types and the # of APL DU APIs'));
+	ELSE
+		IF :du_version >= 2610
 		THEN
-			:results.insert(('This is an unlisted On Premise version of APL','',:du_version));
-			SELECT "VERSION","TABLES_TYPES","DU_APIS" into ref_version,ref_nb_apl_tables_types,ref_nb_apl_dus  FROM :known_versions WHERE "VERSION" = (SELECT MAX("VERSION") FROM:known_versions);
-			-- we check if the current version is more recent than the last known version
-			-- in such case, the # of tables and types and the # of APL DU APIs should be at least the same as the last known version
-			IF :du_version>:ref_version
+			IF :nb_apl_tables_types >= 172 AND :nb_apl_du_apis >= 197
 			THEN
-				:results.insert(('This is a new unknown version of APL','',:du_version));
-				IF :nb_apl_tables_types >= :ref_nb_apl_tables_types
-				THEN
-					:results.insert(('Sensible # of APL tables and types','OK',:nb_apl_tables_types || ' >= ' || :ref_nb_apl_tables_types));
-				ELSE
-					:results.insert(('# of APL tables and types','ISSUE',:nb_apl_tables_types || ' is suspicously low. It should be at least ' || :ref_nb_apl_tables_types));
-				END IF;
-				IF :nb_apl_du_apis >= :ref_nb_apl_dus
-				THEN
-					:results.insert(('Sensible # of APL DU APIS','OK',:nb_apl_du_apis || ' >= ' || :ref_nb_apl_dus));
-				ELSE
-					:results.insert(('# of APL DU APIS','ISSUE',:nb_apl_du_apis || ' is suspiciously low. It should be at least ' || :ref_nb_apl_dus));
-				END IF;
+				:results.insert(('This is an On Premise version of APL >= 2610','OK','The # of APL tables and types and the # of APL DU APIs looks like OK'));
 			ELSE
-				:results.insert(('This is an unlisted old On Premise version of APL','',:du_version));
-				:results.insert(('# of APL tables and types','',:nb_apl_tables_types || ' to be checked'));
-				:results.insert(('# of APL APL DU APIS','',:nb_apl_du_apis || ' to be checked'));
+				:results.insert(('For an OnPremise Version of APL > 2610, the # of tables or APL DU APIs is suspiciously low for this version','ISSUE','The # of APL tables and types or the # of APL DU APIs is suspiciously low'));
 			END IF;
 		ELSE
-			:results.insert(('This is an On Premise well known version of APL','','Matching version is ' || :ref_version));
-			IF :nb_apl_tables_types <> :ref_nb_apl_tables_types
-			THEN
-				:results.insert(('Bad # of APL tables and types','ISSUE',:nb_apl_tables_types || ' instead of ' || :ref_nb_apl_tables_types));
-			ELSE
-				:results.insert(('Good # of APL tables and types','OK',:nb_apl_tables_types || ' is the expected number'));
-			END IF;
-			IF :nb_apl_du_apis <> :ref_nb_apl_dus
-			THEN
-				:results.insert(('Bad # of APL DU APIS','ISSUE',:nb_apl_du_apis || ' instead of ' || :ref_nb_apl_dus));
-			ELSE
-				:results.insert(('Good # of APL DU APIS','OK',:nb_apl_du_apis || ' is the expected number'));
-			END IF;
+			:results.insert(('This is an On Premise version of APL < 2610','WARNING','You need to check the # of APL tables and types and the # of APL DU APIs'));
 		END IF;
 	END IF;
 END;
-
-CREATE FUNCTION "HAS_APL"()
-RETURNS has_apl BOOLEAN
-LANGUAGE SQLSCRIPT
-SQL SECURITY INVOKER
-DETERMINISTIC 
-AS BEGIN
-	DECLARE nb INT;
-	SELECT COUNT(*) into nb FROM "M_PLUGIN_STATUS" WHERE "PLUGIN_NAME"='sap_afl_sdk_apl';
-	IF :nb > 0 THEN
-		has_apl := TRUE;
-	ELSE
-		has_apl := FALSE;
-	END IF;
-END;
-
 
 CREATE PROCEDURE "GET_DU_VERSION"(OUT du_version NVARCHAR(100))
 LANGUAGE SQLSCRIPT 
@@ -772,42 +696,42 @@ BEGIN
 
 	:results.insert(('section:','','Some support statements **valid only in this instance**'));
 
-	:results.insert(('subsection:','','Installation and upgrade of APL'));
+	:results.insert(('subsection:','code','Installation and upgrade of APL'));
 	:results.insert(('Install apl','First install',"CLEAN_PARSER_PROOFING"(:hana_shared_sid || '/hdblcm/hdblcm <->action=update_components <->components=sap_afl_sdk_apl <->system_user=SYSTEM <->component_dirs=<extracted APL archive>/installer')));
 	:results.insert(('Reinstall apl','forcing full reinstall',"CLEAN_PARSER_PROOFING"(:hana_shared_sid || '/hdblcm/hdblcm <->action=update_components <->components=sap_afl_sdk_apl <->system_user=SYSTEM <->ignore=check_version <->component_dirs=<extracted APL archive>/installer')));
-	
-	:results.insert(('subsection:','','Connection to HANA instance'));
-	:results.insert(('Connect to system db using hdbsql','server side', :hana_shared_sid ||  '/hdbclient/hdbsql -i ' || instance_number || ' -d SYSTEMDB -u SYSTEM'));	
-	:results.insert(('Connect to tenant using hdbsql','server side',:hana_shared_sid ||  '/hdbclient/hdbsql -i ' || :instance_number || ' -d '|| :database_name || ' -u SYSTEM'));	
-	:results.insert(('Connect to system db using hdbsql','client side (experimental)','hdbsql -n ' || real_host_name || ' -i ' || :instance_number || ' -d SYSTEMDB -u SYSTEM'));	
-	:results.insert(('Connect to tenant using hdbsql','client side (experimental)','hdbsql -n ' || real_host_name || ' -i ' || :instance_number || ' -d '|| :database_name || ' -u SYSTEM'));	
-		
-	:results.insert(('subsection:','','Post Install step'));
+
+	:results.insert(('subsection:','code','Connection to HANA instance'));
+	:results.insert(('Connect to system db using hdbsql','server side', :hana_shared_sid ||  '/hdbclient/hdbsql -i ' || instance_number || ' -d SYSTEMDB -u SYSTEM'));
+	:results.insert(('Connect to tenant using hdbsql','server side',:hana_shared_sid ||  '/hdbclient/hdbsql -i ' || :instance_number || ' -d '|| :database_name || ' -u SYSTEM'));
+	:results.insert(('Connect to system db using hdbsql','client side (experimental)','hdbsql -n ' || real_host_name || ' -i ' || :instance_number || ' -d SYSTEMDB -u SYSTEM'));
+	:results.insert(('Connect to tenant using hdbsql','client side (experimental)','hdbsql -n ' || real_host_name || ' -i ' || :instance_number || ' -d '|| :database_name || ' -u SYSTEM'));
+
+	:results.insert(('subsection:','code','Post Install step'));
 	:results.insert(('Add a script server','to database ' || :database_name,:hana_shared_sid || '/hdbclient/hdbsql -i ' || :instance_number || ' -d SYSTEMDB -u SYSTEM "ALTER DATABASE ' || :database_name || ' ADD ''scriptserver''"'));
-	
-	:results.insert(('subsection:','','APL files on server'));
+
+	:results.insert(('subsection:','code','APL files on server'));
 	:results.insert(('List plugin folders on server','','ls -la ' || :hana_shared_sid ||  '/exe/linuxx86_64/plugins'));
 	:results.insert(('List active APL files on server','','ls -la ' || :hana_shared_sid ||  '/exe/linuxx86_64/plugins/sap_afl_sdk_apl_' || :APL_version || '*'));
 	:results.insert(('List active APL DU on server','','ls -la ' || :hana_shared_sid || '/global/hdb/auto_content/HCO_PA_APL.tgz'));
 	:results.insert(('List all APL DUs on server','','find ' || :hana_shared_sid || ' -name HCO_PA_APL.tgz -ls'));
-	
-	:results.insert(('subsection:','','HANA Traces'));
+
+	:results.insert(('subsection:','code','HANA Traces'));
 	:results.insert(('List traces on server','of database '|| :database_name,'ls -la '||:sap_retrieval_path || 'trace/DB_' || :database_name ));
 	:results.insert(('List other traces on server',''|| :database_name,'ls -la '||:sap_retrieval_path || 'trace' ));
 
-	:results.insert(('subsection:','','Resynchronize APL DU in HANA repository'));
+	:results.insert(('subsection:','code','Resynchronize APL DU in HANA repository'));
 	:results.insert(('hdbupdrep','force update '|| :database_name || '''s DU repository',"CLEAN_PARSER_PROOFING"(:hana_shared_sid ||  '/global/hdb/install/bin/hdbupdrep <->ignore=check_version <->sid=' || :database_name || ' <->system_user=SYSTEM <->delivery_unit=/hana/shared/'||:database_name||'/global/hdb/auto_content/HCO_PA_APL.tgz')));
 
-	:results.insert(('subsection:','','Reinstall APL DU with Application Life Cycle Management'));
+	:results.insert(('subsection:','code','Reinstall APL DU with Application Life Cycle Management'));
 	:results.insert(('Application Life Cycle Management Ux','client side secure (exp)',"CLEAN_PARSER_PROOFING"('https:</>' || :real_host_name ||':4300/sap/hana/xs/lm/index.html?page=HomeTab')));
 	:results.insert(('Application Life Cycle Management Ux','client side unsecure (exp)',"CLEAN_PARSER_PROOFING"('https:</>' || :real_host_name ||':8000/sap/hana/xs/lm/index.html?page=HomeTab')));
 
-	:results.insert(('subsection:','','Reinstall APL DU with hdbalm'));
+	:results.insert(('subsection:','code','Reinstall APL DU with hdbalm'));
 	:results.insert(('hdbalm: list registered DUs','server side',:hana_shared_sid || '/hdbclient/hdbalm -h localhost -p 8000 -u SYSTEM du list'));
 	:results.insert(('hdbalm: get infos about APL DU','server side',:hana_shared_sid || '/hdbclient/hdbalm -h localhost -p 8000 -u SYSTEM du get HCO_PA_APL sap.com'));
 	:results.insert(('hdbalm: import APL DU','server side',:hana_shared_sid || '/hdbclient/hdbalm -h localhost -p 8000 -u SYSTEM import /hana/shared/'||:database_name||'/global/hdb/auto_content/HCO_PA_APL.tgz'));
 
-	:results.insert(('subsection:','','Reinstall APL DU with regi'));
+	:results.insert(('subsection:','code','Reinstall APL DU with regi'));
 	:results.insert(('regi: list APL DU','server side',"CLEAN_PARSER_PROOFING"(:hana_shared_sid || '/hdbclient/regi <->user=SYSTEM <->host=localhost:' || :regi_port || ' <->database=' || :database_name || ' list du <->password=<system password> ')));	
 	:results.insert(('regi: list DUs','server side',"CLEAN_PARSER_PROOFING"(:hana_shared_sid || '/hdbclient/regi <->user=SYSTEM <->host=localhost:' || :regi_port || ' <->database=' || :database_name || ' list dus <->password=<system password> ')));
 	:results.insert(('regi: list sections of APL DU','server side',"CLEAN_PARSER_PROOFING"(:hana_shared_sid || '/hdbclient/regi <->user=SYSTEM <->host=localhost:' || :regi_port || ' <->database=' || :database_name || ' list du HCO_PA_APL <->password=<system password> ')));
@@ -818,7 +742,7 @@ BEGIN
 	:results.insert(('regi: test import of APL DU','server side',"CLEAN_PARSER_PROOFING"(:hana_shared_sid || '/hdbclient/regi <->user=SYSTEM <->host=localhost:' || :regi_port || ' <->database=' || :database_name || ' import du ' || :hana_shared_sid ||  '/exe/linuxx86_64/plugins/sap_afl_sdk_apl_' || :APL_version || '*/auto_content/HCO_PA_APL.tgz <->forceremove=1 <->determinexrefs=1 -v -l <->onlytestimport=1 <->password=<system password>')));
 	:results.insert(('regi: import of APL DU','server side',"CLEAN_PARSER_PROOFING"(:hana_shared_sid || '/hdbclient/regi <->user=SYSTEM <->host=localhost:' || :regi_port || ' <->database=' || :database_name || ' import du ' || :hana_shared_sid ||  '/exe/linuxx86_64/plugins/sap_afl_sdk_apl_' || :APL_version || '*/auto_content/HCO_PA_APL.tgz <->forceremove=1 <->determinexrefs=1 -v -l <->password=<system password>')));	
 
-	:results.insert(('subsection:','','DANGER ZONE'));
+	:results.insert(('subsection:','code','DANGER ZONE'));
 	:results.insert(('hdblcm: uninstall APL - DANGER ZONE !','server side',"CLEAN_PARSER_PROOFING"(:hana_shared_sid || '/hdblcm/hdblcm <->action=uninstall <->components=sap_afl_sdk_apl ')));
 	:results.insert(('hdbalm: undeploy APL DU - DANGER ZONE !','server side',:hana_shared_sid || '/hdbclient/hdbalm -h localhost -p 8000 -u SYSTEM du undeploy HCO_PA_APL sap.com'));
 	:results.insert(('regi: full undeploy of APL DU - DANGER ZONE!!','server side',"CLEAN_PARSER_PROOFING"(:hana_shared_sid || '/hdbclient/regi <->user=SYSTEM <->host=localhost:' || :regi_port || ' <->database=' || :database_name || ' undeploy HCO_PA_APL <->vendor=sap.com <->password=<system password>')));	
@@ -831,7 +755,6 @@ AS
 BEGIN
 	DECLARE instance_number NVARCHAR(100);
 	DECLARE database_name NVARCHAR(100);
-	DECLARE APL_version NVARCHAR(100);
 	DECLARE hana_platform NVARCHAR(100);
 	DECLARE hana_shared_sid NVARCHAR(100);
 	DECLARE hostname NVARCHAR(100);
@@ -839,26 +762,25 @@ BEGIN
 	SELECT "HOST","DATABASE_NAME" into hostname,database_name FROM "M_DATABASE";
 	SELECT "VALUE" into hana_platform DEFAULT '' FROM "M_PLUGIN_MANIFESTS" WHERE "PLUGIN_NAME"='SAP_AFL_SDK_APL' AND "KEY"='platform';
 	SELECT "VALUE" into instance_number FROM "M_SYSTEM_OVERVIEW" WHERE UPPER("SECTION")='SYSTEM' AND UPPER("NAME")='INSTANCE NUMBER' ;
-	apl_version='pouet';
 
 
 	:results.insert(('section:','','Some support statements **valid only in this instance**'));
 
-	:results.insert(('subsection:','','Connection to HANA instance'));
-	:results.insert(('Connect to system db using hdbsql','server side','/usr/sap/'||:database_name||'/HDB'||:instance_number||'/exe/hdbsql -i ' || instance_number || ' -d SYSTEMDB -u SYSTEM'));	
-	:results.insert(('Connect to tenant using hdbsql','server side','/usr/sap/'||:database_name||'/HDB'||:instance_number||'/exe/hdbsql -i ' || :instance_number || ' -d '|| :database_name || ' -u SYSTEM'));	
-	:results.insert(('Connect to system db using hdbsql','client side (experimental)','hdbsql -n ' || :hostname || ' -i ' || :instance_number || ' -d SYSTEMDB -u SYSTEM'));	
-	:results.insert(('Connect to tenant using hdbsql','client side (experimental)','hdbsql -n ' || :hostname || ' -i ' || :instance_number || ' -d '|| :database_name || ' -u SYSTEM'));	
-		
-	:results.insert(('subsection:','','Post Install step'));
+	:results.insert(('subsection:','code','Connection to HANA instance'));
+	:results.insert(('Connect to system db using hdbsql','server side','/usr/sap/'||:database_name||'/HDB'||:instance_number||'/exe/hdbsql -i ' || instance_number || ' -d SYSTEMDB -u SYSTEM'));
+	:results.insert(('Connect to tenant using hdbsql','server side','/usr/sap/'||:database_name||'/HDB'||:instance_number||'/exe/hdbsql -i ' || :instance_number || ' -d '|| :database_name || ' -u SYSTEM'));
+	:results.insert(('Connect to system db using hdbsql','client side (experimental)','hdbsql -n ' || :hostname || ' -i ' || :instance_number || ' -d SYSTEMDB -u SYSTEM'));
+	:results.insert(('Connect to tenant using hdbsql','client side (experimental)','hdbsql -n ' || :hostname || ' -i ' || :instance_number || ' -d '|| :database_name || ' -u SYSTEM'));
+
+	:results.insert(('subsection:','code','Post Install step'));
 	:results.insert(('Add a script server','to database ' || :database_name,'/usr/sap/'||:database_name||'/HDB'||:instance_number||'/exe/hdbsql -i ' || :instance_number || ' -d SYSTEMDB -u SYSTEM "ALTER DATABASE ' || :database_name || ' ADD ''scriptserver''"'));
-	
-	:results.insert(('subsection:','','APL files on server'));
+
+	:results.insert(('subsection:','code','APL files on server'));
 	:results.insert(('List plugin folders on server','','ls -la /hana/shared/'||:database_name||'/exe/'||:hana_platform||'/plugins'));
 	:results.insert(('List APL files on server','','ls -la /hana/shared/'||:database_name||'/exe/'||:hana_platform||'/plugins/sap_afl_sdk_apl*'));
 	:results.insert(('List APL SQLautocontent on server','','ls -la /hana/shared/'||:database_name||'/exe/'||:hana_platform||'/plugins/sap_afl_sdk_apl*/aflpm_autoexec*.sql'));
-	
-	:results.insert(('subsection:','','HANA Traces'));
+
+	:results.insert(('subsection:','code','HANA Traces'));
 	:results.insert(('List traces on server','of database '|| :database_name,'ls -la /hana/mounts/trace/hana/DB_' || :database_name ));
 	:results.insert(('List other traces on server',''|| '','ls -la /hana/mounts/trace/hana' ));
 END;
@@ -936,8 +858,7 @@ BEGIN
 		registration_trace = SELECT 'Error text from previous registration process failures' AS "KEY",'WARNING/ERROR' AS "STATUS",SUBSTR("ERROR_TEXT",0,1000) || ':' || "AREA_STATUS" || ':' || "PACKAGE_STATUS" AS "DETAILS" FROM "M_PLUGIN_STATUS" WHERE UPPER("PLUGIN_NAME")='SAP_AFL_SDK_APL' AND ("AREA_STATUS"<>'REGISTRATION SUCCESSFUL' OR "PACKAGE_STATUS"<>'REGISTRATION_SUCCESSFUL');
 		:results.insert(:registration_trace);
 	ELSE
-		:results.insert(('Good high level status of registration of APL plugin','OK','REGISTRATION SUCCESSFUL'));	
-		:results.insert(('No detected issue during registration process of APL plugin','OK','REGISTRATION SUCCESSFUL'));
+		:results.insert(('Good high level status of registration of APL plugin','OK','REGISTRATION SUCCESSFUL'));
 	END IF;
 
 	:results.insert(('subsection:','|Check|Status|Details','Detailed registration of APL plugin'));
@@ -1483,8 +1404,8 @@ BEGIN
 END;
 
 
-CREATE PROCEDURE "CHECK_FULL_INSTALL"()
-LANGUAGE SQLSCRIPT 
+CREATE PROCEDURE "CHECK_FULL_INSTALL"(OUT final_results "CHECK_RESULTS_T")
+LANGUAGE SQLSCRIPT
 SQL SECURITY INVOKER
 AS
 BEGIN
@@ -1497,23 +1418,15 @@ BEGIN
 	DECLARE basic_runtime_results "CHECK_RESULTS_T";
 	DECLARE train_procedure_results "CHECK_RESULTS_T";
 	DECLARE who_am_i NVARCHAR(1000) = CURRENT_USER;
-	DECLARE nb_issues INT;
 	DECLARE has_scriptserver BOOLEAN;
-	DECLARE error_message NCLOB;
 	DECLARE version_hana NVARCHAR(1000);
 	DECLARE version_apl NVARCHAR(1000);
 	DECLARE hana_platform NVARCHAR(1000);
 	DECLARE nb_platform INT;
 	DECLARE is_hce BOOLEAN;
 	DECLARE has_apl BOOLEAN;
-	DECLARE final_results "CHECK_RESULTS_T";
-	DECLARE context NVARCHAR(255);
-	DECLARE output_format NVARCHAR(10);
-	DECLARE report_error BOOLEAN;
-	DECLARE md_output MD_OUTPUT_T;
 	DECLARE du_version NVARCHAR(1000);
 	DECLARE uninstall_results "CHECK_RESULTS_T";
-	DECLARE ERROR_APL condition for SQL_ERROR_CODE 10001;
 
 	"GET_HAS_APL"(has_apl);
 	"GET_HAS_SCRIPTSERVER"(has_scriptserver);
@@ -1530,18 +1443,18 @@ BEGIN
 
 	:prerequisite_results.insert(('section:','','Pre-analysis'));
 	:prerequisite_results.insert(('table:','|Main component|Status|Details|',''));
-	IF :is_hce = FALSE 
+	IF :is_hce = FALSE
 	THEN
 		:prerequisite_results.insert(('HANA On Premise','',:version_hana || ' on ' || :hana_platform));
 	ELSE
 		:prerequisite_results.insert(('HANA Cloud','',:version_hana || ' on ' || :hana_platform));
 	END IF;
 
-	IF :has_apl = FALSE 
+	IF :has_apl = FALSE
 	THEN
 		:prerequisite_results.insert(('APL is NOT registered !!','ISSUE','no sap_afl_sdk_apl registered in M_PLUGIN_STATUS'));
 	ELSE
-		:prerequisite_results.insert(('APL is installed','OK',:version_apl));		
+		:prerequisite_results.insert(('APL is installed','OK',:version_apl));
 	END IF;
 	IF :has_scriptserver = FALSE
 	THEN
@@ -1557,12 +1470,12 @@ BEGIN
 	:final_results.insert(:prerequisite_results);
 
 	IF :has_apl = TRUE
-	THEN 
+	THEN
 		CALL "CHECK_INSTALL"(:install_results);
 		:final_results.insert(:install_results);
 		CALL "CHECK_STRANGE_ISSUES"(:strange_issues_results);
 		:final_results.insert(:strange_issues_results);
-		
+
 		:final_results.insert(('section:','','APL Run-time checks'));
 		IF :has_scriptserver = TRUE
 		THEN
@@ -1585,10 +1498,7 @@ BEGIN
 		THEN
 			CALL "CHECK_UNINSTALL"(:uninstall_results);
 			:final_results.insert(:uninstall_results);
-			-- CALL "ANALYZE_CHECKS"(FALSE,:final_results,:analyze_results);
-			-- :final_results.insert(:analyze_results);
 		ELSE
-			-- absolutely nothing
     		:final_results.insert(('Cannot proceed to analysis','ISSUE','APL is not installed'));
 		END IF;
 	END IF;
@@ -1598,7 +1508,21 @@ BEGIN
 	:final_results.insert(:system_infos_results);
 	CALL "CHECK_SUPPORT_STATEMENTS"(:support_statements_results);
 	:final_results.insert(:support_statements_results);
-	
+END;
+
+-- Top-level driver: collects results from CHECK_FULL_INSTALL, then decides
+-- whether to SIGNAL an error and how to render the output.
+DO BEGIN
+	DECLARE final_results "CHECK_RESULTS_T";
+	DECLARE md_output MD_OUTPUT_T;
+	DECLARE context NVARCHAR(255);
+	DECLARE output_format NVARCHAR(10);
+	DECLARE report_error BOOLEAN;
+	DECLARE nb_issues INT;
+	DECLARE error_message NCLOB;
+	DECLARE ERROR_APL condition for SQL_ERROR_CODE 10001;
+
+	CALL "CHECK_FULL_INSTALL"(:final_results);
 
 	-- Purpose of this SQL is to provide a full report for analysis
 	-- not a short error report
@@ -1649,7 +1573,7 @@ BEGIN
 		SELECT COUNT(*) into nb_issues FROM :final_results WHERE "STATUS" IN ('ISSUE','ERROR','ACTION');
 		IF :nb_issues > 0
 		THEN
-			SELECT SUBSTR('['||STRING_AGG("KEY" || ' ' || COALESCE("STATUS",'') || ' ' || COALESCE("DETAILS",'') || CHAR(10))||']',0,3000) INTO error_message FROM :final_results WHERE "STATUS" IN ('ISSUE','ERROR','ACTION');		
+			SELECT SUBSTR('['||STRING_AGG("KEY" || ' ' || COALESCE("STATUS",'') || ' ' || COALESCE("DETAILS",'') || CHAR(10))||']',0,3000) INTO error_message FROM :final_results WHERE "STATUS" IN ('ISSUE','ERROR','ACTION');
 			SIGNAL ERROR_APL set MESSAGE_TEXT = :error_message;
 		END IF;
 	END IF;
@@ -1658,12 +1582,10 @@ BEGIN
 	THEN
 		CALL OUTPUT_AS_MD_3_FIELDS(:final_results,md_output);
 		SELECT * FROM :md_output;
-	ELSE 
+	ELSE
 		SELECT * FROM :final_results;
 	END IF;
 END;
-
-CALL "CHECK_FULL_INSTALL"();
 
 
 ----------------------------------------------------------------------------
@@ -1672,7 +1594,6 @@ CALL "CHECK_FULL_INSTALL"();
 
 -- Clean everything (need to be user with high privileges again)
 
--- use hdbsql's macros to provide user with high privileges and its password
 connect &SYSTEM_USER PASSWORD &SYSTEM_PASSWORD;
 -- clean the user and the schema
 DROP USER CHECK_APL CASCADE;
