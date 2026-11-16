@@ -251,6 +251,12 @@ if [[ "${SHOW_CMD_ONLY:-0}" -eq 1 ]]; then
     echo
     echo "Final hdbsql command:"
     echo "$DISPLAY_CMD"
+    echo
+    echo "# SQL files left on disk for copy-paste use (remove manually when done):"
+    echo "#   $PRECHECK_SQL_SCRIPT"
+    echo "#   $SQL_SCRIPT"
+    # Keep the temp SQL files so the displayed commands are immediately runnable.
+    trap - EXIT
     exit 0
 fi
 
